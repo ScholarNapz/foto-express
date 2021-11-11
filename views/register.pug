@@ -1,0 +1,41 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    .landing
+      if errors
+          ul.errors-message-box
+            each error, i in errors 
+              li.report #{error.msg}
+      
+      .landing-form
+        form(method='post', action='/register')
+          .form-group
+            label(for='username') Username
+            br
+            input#username(type='text' name='username' placeholder='Enter Username')
+          .form-group
+            label(for='name') Name
+            br
+            input#name(type='text' name='name' placeholder='Enter Name')
+          .form-group
+            label(for='email') Email
+            br
+            input#email(type='email' name='email' placeholder='Enter Email')
+          .form-group
+            label(for='password') Password
+            br
+            input#password(type='password' name='password' placeholder='Enter Password')
+          .form-group
+            label(for='password2') Confirm Password
+            br
+            input#password2(type='password' name='password2' placeholder='Confirm Password')
+          br
+          .form-buttons
+            button#login.btn.btn-medSlate-full(type='submit' name='submit' value='Register') Register
+            .gap
+            a.btn.btn-fir(href='/') login

@@ -1,0 +1,13 @@
+Createdb
+-------------------
+use fotodb
+db.createCollection('users');
+
+show dbs
+------------------
+confirms db creation
+
+
+
+
+ 

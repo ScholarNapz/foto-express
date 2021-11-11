@@ -1,0 +1,23 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+  nav
+    .nav-logo
+      a(href='#')
+        | foto
+        strong.logo-strong .
+    .nav-control
+      .nav-main
+        a(href='users/upload') Upload
+        a(href='#user/{thisUser}') Users
+        a(href='/gallery') Gallery
+      .gap
+      .nav-quit
+        a(href='/users/logout') Logout
+
+  block content
