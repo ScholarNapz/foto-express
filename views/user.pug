@@ -6,7 +6,7 @@ block content
       .user-profile.container-small
         .section-profile-image
           .profile-image-container
-            img.profile-image(src='/uploads/300x300.png' alt='profile image')
+            img.profile-image(src=`${user.profileimage}` alt='profile image')
           .upload-image
             a.btn.btn-medSlate-full(href='#uploadImage') Upload
         .section-profile-user
@@ -18,82 +18,26 @@ block content
             p User Bio:
             .profile-bio-box
               | {Bio description}
-      .line
+      //- .line
       .gallery
         h3 Galleries
-        .generate-grid
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
-          .box.box-detailed
-            .box-image
-              a(href='#Gallery')
-                img(src='300x300.png' alt='cat')
-            a(href='#Gallery') {Gallery name}
-            p Images: {num}
+        .generate-grid.align-below
+
+          if colls 
+            each val, key in colls
+              .box.box-detailed
+                .box-image
+                  a(href='#Gallery')
+                    img(src=`${val}` alt='cat')
+                a(href='#Gallery') #{key}
+                p Images: {num}
+
       .gallery
         h3 All Photos
         .generate-grid
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
-          .box.box-image
-            a(href='#')
-              img(src='300x300.png' alt='cat')
+          if images
+            each image, i in images 
+              .box.box-image
+                a(href='#')
+                  img(src=`${image.name}` alt='img')
+

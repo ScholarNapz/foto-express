@@ -23,7 +23,7 @@ const flash = require('connect-flash');
 const mongo = require('mongodb');
 const mongoose = require('mongoose');
 //? MONK
-const db = require('monk')('localhost/fotodb');
+var db = require('monk')('localhost/fotodb');
 
 //?MONGOOSE
 //let db = mongoose.connection;
