@@ -1,0 +1,48 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    .landing
+      
+      .landing-form
+        != messages()
+        if errors 
+            ul.errors-message-box
+              center 
+                each error, i in errors 
+                    li.report #{error.msg}
+
+        form(method='post' action='/login')
+          .form-group
+            label(for='username') Username
+            br
+            input#username(type='text' name='username')
+          .form-group
+            label(for='password') Password
+            br
+            input#password(type='text' name='password')
+          .form-buttons
+            button#login.btn.btn-fir-full(type='submit' name='submit') Login
+            .gap
+            a.btn.btn-rustic(href='/register') Register
+
+          //!- GLOBAL VAR
+          //!- if user 
+          //!-  p #{user.username}
+          //!- if !user
+          //!-   p bye
+          
+      .gap
+      .hero
+        h2 Welcome to
+        h1
+          | foto
+          strong.logo-strong .
+        p
+          | Foto
+          strong.logo-strong .
+          |  is a online image sharing platform. Users can find and download images from others, as well as share there own with the community
