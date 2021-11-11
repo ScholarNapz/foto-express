@@ -8,13 +8,17 @@ var _require = require('express-validator'),
     body = _require.body,
     validationResult = _require.validationResult;
 
-var app = require('../app');
+var app = require('../app'); // const User = require('../models/user');
 
-var User = require('../models/user');
 
 var passport = require('passport');
 
-var LocalStrategy = require('passport-local').Strategy;
+var LocalStrategy = require('passport-local').Strategy; //? DB
+
+
+var mongodb = require('mongodb');
+
+var db = require('monk')('localhost/fotodb');
 /* GET home page. */
 
 
@@ -44,6 +48,7 @@ router.post('/register', [body('username', 'Username is Required').not().isEmpty
   var email = req.body.email;
   var password = req.body.password;
   var password2 = req.body.password2;
+  var profileimage = '/profileimages/avatar.png';
   var errors = validationResult(req);
   console.log(errors);
 
@@ -58,7 +63,8 @@ router.post('/register', [body('username', 'Username is Required').not().isEmpty
       username: username,
       name: name,
       email: email,
-      password: password
+      password: password,
+      profileimage: profileimage
     });
     User.createUser(newUser, function (err, user) {
       if (err) throw err;
@@ -104,7 +110,8 @@ router.post('/login', passport.authenticate('local', {
   failureRedirect: '/',
   failureFlash: 'Invalid Username or Password'
 }), function (req, res) {
-  req.flash('success', 'Login Successful');
-  res.redirect('/users');
+  req.flash('success', 'Login Successful'); //!---------------- res.redirect('/users/' + req.user.username);
+
+  res.redirect('/users/');
 });
 module.exports = router;

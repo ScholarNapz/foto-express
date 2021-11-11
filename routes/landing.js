@@ -3,11 +3,14 @@ var router = express.Router();
 
 const { body, validationResult } = require('express-validator');
 const app = require('../app');
-const User = require('../models/user');
+// const User = require('../models/user');
 
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 
+//? DB
+const mongodb = require('mongodb');
+const db = require('monk')('localhost/fotodb');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -43,6 +46,7 @@ router.post('/register', [
         let email = req.body.email;
         let password = req.body.password;
         let password2 = req.body.password2;
+        let profileimage = '/profileimages/avatar.png'
 
 
         const errors = validationResult(req);
@@ -60,7 +64,8 @@ router.post('/register', [
                 username: username,
                 name: name,
                 email: email,
-                password: password
+                password: password,
+                profileimage: profileimage
             });
 
             User.createUser(newUser, (err, user) => {
@@ -105,8 +110,10 @@ passport.use(new LocalStrategy((username, password, done) => {
 
 router.post('/login', passport.authenticate('local', { failureRedirect: '/', failureFlash: 'Invalid Username or Password' }),
     function(req, res) {
+
         req.flash('success', 'Login Successful');
-        res.redirect('/users');
+        //!---------------- res.redirect('/users/' + req.user.username);
+        res.redirect('/users/');
     });
 
 module.exports = router;

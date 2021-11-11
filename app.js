@@ -19,11 +19,17 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 
 const flash = require('connect-flash');
-
+//? DB
 const mongo = require('mongodb');
 const mongoose = require('mongoose');
-let db = mongoose.connection;
+//? MONK
+const db = require('monk')('localhost/fotodb');
 
+//?MONGOOSE
+//let db = mongoose.connection;
+
+//? Moment
+const moment = require('moment');
 
 
 const landingRouter = require('./routes/landing');
@@ -57,6 +63,12 @@ app.use(passport.session());
 app.use(require('connect-flash')());
 app.use(function(req, res, next) {
     res.locals.messages = require('express-messages')(req, res);
+    next();
+});
+
+//? MONK
+app.use((req, res, next) => {
+    req.db = db;
     next();
 });
 

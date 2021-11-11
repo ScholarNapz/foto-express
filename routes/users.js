@@ -4,6 +4,10 @@ var router = express.Router();
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 
+//? DB
+const mongodb = require('mongodb');
+const db = require('monk')('localhost/fotodb');
+
 
 /* GET users listing. */
 router.get('/', ensureAuthenticated,
