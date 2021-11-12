@@ -8,6 +8,12 @@ const LocalStrategy = require('passport-local').Strategy;
 const mongodb = require('mongodb');
 const db = require('monk')('localhost/fotodb');
 
+
+function upload(e) {
+    res.render('/users/upload');
+}
+
+/* GET users listing. */
 router.get('/',
     // ensureAuthenticated,
     function(req, res, next) {
@@ -23,9 +29,13 @@ router.get('/',
 
                 collections.forEach(element => {
                     images.findOne({ username: username, collections: [element] }).then((img) => {
-                        const image = JSON.parse(JSON.stringify(img)).thumbnail;
+                        if (img !== null) {
+                            const image = JSON.parse(JSON.stringify(img)).thumbnail;
+                            collectionObj[element] = image;
+                        } else {
+                            users.update({ username: username }, { $pull: { collections: element } });
+                        }
 
-                        collectionObj[element] = image;
                     });
                 });
 
@@ -78,10 +88,7 @@ router.get('/',
         };
 
         users.findOne({ username: 'mario' }).then((user) => {
-            createUserPage(user).then((result) => {
-                console.log(result);
-
-            });
+            createUserPage(user).then((result) => {});
         });
 
     });

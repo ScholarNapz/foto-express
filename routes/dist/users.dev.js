@@ -12,71 +12,88 @@ var LocalStrategy = require('passport-local').Strategy; //? DB
 var mongodb = require('mongodb');
 
 var db = require('monk')('localhost/fotodb');
+
+function upload(e) {
+  res.render('/users/upload');
+}
 /* GET users listing. */
 
 
 router.get('/', // ensureAuthenticated,
 function (req, res, next) {
-  //!------CHANGE ALL INSTANCES OF MARIO
   var db = req.db;
   var users = db.get('users');
-  var images = db.get('images');
-  var user = null;
-  var collectionList = [];
-  var collectionThumbnail = [];
-  var collectionObj = {};
-  users.findOne({
-    username: 'mario'
-  }).then(function (users) {
-    user = users;
-  }); // users.findOne({ username: 'mario' }).then((users) => {
-  //     // collectionList = users;
-  // });
+  var images = db.get('images'); //!------CHANGE ALL INSTANCES OF MARIO
 
-  users.findOne({
-    username: 'mario'
-  }, 'collections').then(function (userColls) {
-    var collections = JSON.parse(JSON.stringify(userColls)).collections;
-
-    if (collections.length > 0) {
+  var getCollectionImages = function getCollectionImages(collections, username) {
+    return new Promise(function (resolve, reject) {
+      var collectionObj = {};
       collections.forEach(function (element) {
-        collectionList.push(element);
         images.findOne({
-          username: 'mario',
+          username: username,
           collections: [element]
         }).then(function (img) {
-          var image = JSON.parse(JSON.stringify(img)).thumbnail; // collectionThumbnail.push(image);
-          // console.log(image);
-
-          collectionObj[element] = image;
+          if (img !== null) {
+            var image = JSON.parse(JSON.stringify(img)).thumbnail;
+            collectionObj[element] = image;
+          } else {
+            users.update({
+              username: username
+            }, {
+              $pull: {
+                collections: element
+              }
+            });
+          }
         });
       });
-    }
+      setTimeout(function () {
+        resolve(collectionObj);
+      }, 5);
+    });
+  };
 
-    images.find({
-      username: 'mario'
-    }, {}).then(function (images) {
-      res.render('user', {
-        images: images,
-        user: user,
-        colls: collectionObj // colls: collectionList,
-        // collsThumb: collectionThumbnail
+  var getCollectionDetails = function getCollectionDetails(username) {
+    return new Promise(function (resolve, reject) {
+      users.findOne({
+        username: username
+      }, 'collections').then(function (userColls) {
+        var collections = JSON.parse(JSON.stringify(userColls)).collections;
 
+        if (collections.length > 0) {
+          getCollectionImages(collections, username).then(function (collList) {
+            resolve(collList);
+          });
+        } else {
+          resolve('{}');
+        }
       });
     });
-    console.log(JSON.parse(JSON.stringify(userColls)).collections);
+  };
+
+  var createUserPage = function createUserPage(user) {
+    return new Promise(function (resolve, reject) {
+      var username = JSON.parse(JSON.stringify(user)).username;
+      images.find({
+        username: username
+      }, {}).then(function (images) {
+        getCollectionDetails(username).then(function (colls) {
+          res.render('user', {
+            images: images,
+            user: user,
+            colls: colls
+          });
+          resolve('Done');
+        });
+      });
+    });
+  };
+
+  users.findOne({
+    username: 'mario'
+  }).then(function (user) {
+    createUserPage(user).then(function (result) {});
   });
-  console.log('...1');
-  console.log(collectionList);
-  console.log('...2');
-  console.log(collectionThumbnail); // images.find({ username: 'mario' }, {}).then((images) => {
-  //     res.render('user', {
-  //         images: images,
-  //         user: user,
-  //         colls: collectionList,
-  //         collsThumb: collectionThumbnail
-  //     });
-  // });
 });
 
 function ensureAuthenticated(req, res, next) {

@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  section.section-upload.container-small.pad-hor
+    h3 Upload Image
+    form.flex-col(action='/images/upload', method='post', enctype='multipart/form-data')
+      input#upload-image(type='file', name='upload-image')
+      .image-display
+        img(src='300x300.png', alt='Image preview')
+      input.btn.btn-medSlate.btn-medSlate-full(type='submit', name='upload', value='Submit ')

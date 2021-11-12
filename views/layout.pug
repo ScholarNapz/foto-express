@@ -13,11 +13,12 @@ html
         strong.logo-strong .
     .nav-control
       .nav-main
-        a(href='users/upload') Upload
+        form(action='/users/upload/')
+          button(type='submit' name='upload') Upload
+        a(href='/images/upload') Upload
         a(href='#user/{thisUser}') Users
         a(href='/gallery') Gallery
       .gap
       .nav-quit
         a(href='/users/logout') Logout
-
   block content
