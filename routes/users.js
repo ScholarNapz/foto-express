@@ -8,79 +8,83 @@ const LocalStrategy = require('passport-local').Strategy;
 const mongodb = require('mongodb');
 const db = require('monk')('localhost/fotodb');
 
-
-/* GET users listing. */
 router.get('/',
     // ensureAuthenticated,
     function(req, res, next) {
-        //!------CHANGE ALL INSTANCES OF MARIO
         const db = req.db;
         const users = db.get('users')
         const images = db.get('images');
 
-        let user = null;
-        let collectionList = [];
+        //!------CHANGE ALL INSTANCES OF MARIO
 
-        let collectionThumbnail = [];
+        const getCollectionImages = (collections, username) => {
+            return new Promise((resolve, reject) => {
+                let collectionObj = {};
 
-        let collectionObj = {}
-        users.findOne({ username: 'mario' }).then((users) => {
-            user = users;
-        });
-        // users.findOne({ username: 'mario' }).then((users) => {
-        //     // collectionList = users;
-
-        // });
-
-        users.findOne({ username: 'mario' }, 'collections').then((userColls) => {
-            const collections = JSON.parse(JSON.stringify(userColls)).collections;
-
-            if (collections.length > 0) {
                 collections.forEach(element => {
-                    collectionList.push(element);
-
-                    images.findOne({ username: 'mario', collections: [element] }).then((img) => {
+                    images.findOne({ username: username, collections: [element] }).then((img) => {
                         const image = JSON.parse(JSON.stringify(img)).thumbnail;
-                        // collectionThumbnail.push(image);
-                        // console.log(image);
+
                         collectionObj[element] = image;
                     });
                 });
 
-            }
+                setTimeout(() => {
+                    resolve(collectionObj);
+                }, 5);
+            });
+        };
 
-            images.find({ username: 'mario' }, {}).then((images) => {
-                res.render('user', {
-                    images: images,
-                    user: user,
-                    colls: collectionObj
-                        // colls: collectionList,
-                        // collsThumb: collectionThumbnail
+        const getCollectionDetails = (username) => {
+            return new Promise((resolve, reject) => {
+
+
+                users.findOne({ username: username }, 'collections').then((userColls) => {
+
+                    const collections = JSON.parse(JSON.stringify(userColls)).collections;
+                    if (collections.length > 0) {
+
+                        getCollectionImages(collections, username).then(collList => {
+                            resolve(collList);
+                        });
+                    } else {
+                        resolve('{}');
+                    }
+                });
+
+
+
+            });
+        };
+
+        const createUserPage = (user) => {
+            return new Promise((resolve, reject) => {
+                const username = JSON.parse(JSON.stringify(user)).username;
+
+                images.find({ username: username }, {}).then((images) => {
+
+                    getCollectionDetails(username).then((colls) => {
+                        res.render('user', {
+                            images: images,
+                            user: user,
+                            colls: colls
+                        });
+
+                        resolve('Done');
+                    });
+
                 });
             });
+        };
 
+        users.findOne({ username: 'mario' }).then((user) => {
+            createUserPage(user).then((result) => {
+                console.log(result);
 
-
-            console.log(JSON.parse(JSON.stringify(userColls)).collections);
+            });
         });
 
-        console.log('...1');
-        console.log(collectionList);
-        console.log('...2');
-        console.log(collectionThumbnail);
-
-        // images.find({ username: 'mario' }, {}).then((images) => {
-        //     res.render('user', {
-        //         images: images,
-        //         user: user,
-        //         colls: collectionList,
-        //         collsThumb: collectionThumbnail
-        //     });
-        // });
-
-    }
-
-);
+    });
 
 function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated) {
