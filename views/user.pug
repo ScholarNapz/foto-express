@@ -8,7 +8,7 @@ block content
           .profile-image-container
             img.profile-image(src=`${user.profileimage}` alt='profile image')
           .upload-image
-            a.btn.btn-medSlate-full(href='#uploadImage') Upload
+            a.btn.btn-medSlate-full(href='users/upload') Upload
         .section-profile-user
           .profile-username
             h4 {username}
@@ -39,5 +39,5 @@ block content
             each image, i in images 
               .box.box-image
                 a(href='#')
-                  img(src=`${image.name}` alt='img')
+                  img(src=`${image.thumbnail}` alt='img')
 

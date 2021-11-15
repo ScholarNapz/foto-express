@@ -1,0 +1,25 @@
+extends layout
+
+block content
+    section.section-gallery
+      .container-large.flex-col
+        .flex-row
+          .gallery-nav
+            h3 Gallery
+            .gap
+            .search-bar
+              form(method='post', action='/gallery/tags')
+                input(type='text' name='search' placeholder='Search Tag')
+                button(type='submit' name='submit' value='/gallery/tags/') Search
+
+
+        .line
+        .gallery
+          .generate-grid.align-below
+
+            if images 
+              each image,i in images
+                .box.box-detailed
+                  .box-image
+                    a(href='#image')
+                      img(src=`${image.thumbnail}` alt=`${image.name}`)

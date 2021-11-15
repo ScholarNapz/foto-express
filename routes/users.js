@@ -10,7 +10,8 @@ const db = require('monk')('localhost/fotodb');
 
 
 function upload(e) {
-    res.render('/users/upload');
+    res.location('/images/upload');
+    res.redirect('/images/upload');
 }
 
 /* GET users listing. */
@@ -26,6 +27,7 @@ router.get('/',
         const getCollectionImages = (collections, username) => {
             return new Promise((resolve, reject) => {
                 let collectionObj = {};
+                foundAlbums = false;
 
                 collections.forEach(element => {
                     images.findOne({ username: username, collections: [element] }).then((img) => {

@@ -8,7 +8,9 @@ var path = require('path');
 
 var cookieParser = require('cookie-parser');
 
-var logger = require('morgan'); //? missing 
+var logger = require('morgan');
+
+var resizeOptimizeImages = require('resize-optimize-images'); //? missing 
 
 
 var favicon = require('serve-favicon');
@@ -46,6 +48,10 @@ var landingRouter = require('./routes/landing');
 
 var usersRouter = require('./routes/users');
 
+var imagesRouter = require('./routes/images');
+
+var galleryRouter = require('./routes/gallery');
+
 var app = express(); // view engine setup
 
 app.set('views', path.join(__dirname, 'views'));
@@ -56,7 +62,8 @@ app.use(express.urlencoded({
   extended: false
 }));
 app.use(cookieParser());
-app.use(express["static"](path.join(__dirname, 'static'))); //? missing middleware
+app.use(express["static"](path.join(__dirname, 'static')));
+app.use(resizeOptimizeImages()); //? missing middleware
 //multer
 
 var upload = multer({
@@ -88,7 +95,9 @@ app.get('*', function (req, res, next) {
   next();
 });
 app.use('/', landingRouter);
-app.use('/users', usersRouter); // catch 404 and forward to error handler
+app.use('/users', usersRouter);
+app.use('/images', imagesRouter);
+app.use('/gallery', galleryRouter); // catch 404 and forward to error handler
 
 app.use(function (req, res, next) {
   next(createError(404));

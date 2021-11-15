@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+  </head>
+  <body></body>
+  <nav>
+    <div class="nav-logo"><a href="#">foto<strong class="logo-strong">.</strong></a></div>
+    <div class="nav-control">
+      <div class="nav-main"><a href="/images/upload">Upload</a><a href="/users/">Users</a><a href="/gallery">Gallery</a></div>
+      <div class="gap"></div>
+      <div class="nav-quit"><a href="/users/logout">Logout</a></div>
+    </div>
+  </nav>
+  <section class="section-gallery">
+    <div class="container-large flex-col">
+      <div class="flex-row">
+        <div class="gallery-nav">
+          <h3>Gallery</h3>
+          <div class="gap"></div>
+          <div class="search-bar">
+            <form method="post" action="/gallery/tags">
+              <input type="text" name="search" placeholder="Search Tag">
+              <button type="submit" name="submit" value="/gallery/tags/">Search</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="line"></div>
+      <div class="gallery">
+        <div class="generate-grid align-below">
+        </div>
+      </div>
+    </div>
+  </section>
+</html>

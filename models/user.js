@@ -6,9 +6,9 @@ const bcrypt = require('bcryptjs');
 // Connect MongoDB at default port 27017.
 mongoose.connect('mongodb://localhost/fotodb')
     .then(result => {
-        console.log(result);
+        // console.log(result);
     }).catch(err => {
-        console.log(err);
+        // console.log(err);
         throw err;
     });
 

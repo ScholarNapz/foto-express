@@ -50,7 +50,7 @@ router.post('/register', [
 
 
         const errors = validationResult(req);
-        console.log(errors);
+        // console.log(errors);
 
 
         if (!errors.isEmpty()) {
@@ -59,7 +59,7 @@ router.post('/register', [
             });
         } else {
             // If there is no error do this
-            console.log('No Errors...');
+            // console.log('No Errors...');
             var newUser = new User({
                 username: username,
                 name: name,
@@ -70,7 +70,7 @@ router.post('/register', [
 
             User.createUser(newUser, (err, user) => {
                 if (err) throw err;
-                console.log(user);
+                // console.log(user);
             });
 
             req.flash('success', 'Registration successful');
@@ -113,7 +113,7 @@ router.post('/login', passport.authenticate('local', { failureRedirect: '/', fai
 
         req.flash('success', 'Login Successful');
         //!---------------- res.redirect('/users/' + req.user.username);
-        res.redirect('/users/');
+        res.redirect('/gallery');
     });
 
 module.exports = router;

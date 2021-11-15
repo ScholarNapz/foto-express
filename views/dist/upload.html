@@ -15,4 +15,13 @@
       <div class="nav-quit"><a href="/users/logout">Logout</a></div>
     </div>
   </nav>
+  <section class="section-upload container-small pad-hor">
+    <h3>Upload Image</h3>
+    <form class="flex-col" action="/images/upload" method="post" enctype="multipart/form-data">
+      <div class="details-container">
+        <input class="upload-image" id="upload-image" type="file" name="upload-image">
+      </div>
+      <input class="btn btn-medSlate-full" type="submit" name="upload" value="Submit ">
+    </form>
+  </section>
 </html>

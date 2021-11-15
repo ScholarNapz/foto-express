@@ -14,7 +14,8 @@ var mongodb = require('mongodb');
 var db = require('monk')('localhost/fotodb');
 
 function upload(e) {
-  res.render('/users/upload');
+  res.location('/images/upload');
+  res.redirect('/images/upload');
 }
 /* GET users listing. */
 
@@ -28,6 +29,7 @@ function (req, res, next) {
   var getCollectionImages = function getCollectionImages(collections, username) {
     return new Promise(function (resolve, reject) {
       var collectionObj = {};
+      foundAlbums = false;
       collections.forEach(function (element) {
         images.findOne({
           username: username,

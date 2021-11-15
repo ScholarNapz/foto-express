@@ -8,8 +8,9 @@ var _require = require('express-validator'),
     body = _require.body,
     validationResult = _require.validationResult;
 
-var app = require('../app'); // const User = require('../models/user');
+var app = require('../app');
 
+var User = require('../models/user');
 
 var passport = require('passport');
 
@@ -112,6 +113,6 @@ router.post('/login', passport.authenticate('local', {
 }), function (req, res) {
   req.flash('success', 'Login Successful'); //!---------------- res.redirect('/users/' + req.user.username);
 
-  res.redirect('/users/');
+  res.redirect('/gallery');
 });
 module.exports = router;
