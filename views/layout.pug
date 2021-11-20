@@ -8,14 +8,14 @@ html
   body
   nav
     .nav-logo
-      a(href='#')
+      a(href='/gallery')
         | foto
         strong.logo-strong .
     .nav-control
       .nav-main
         a(href='/images/upload') Upload
         a(href='/users/') Users
-        a(href='/gallery') Gallery
+        a(href=`/users/profile/${currentUser.username}`) My profile
       .gap
       .nav-quit
         a(href='/users/logout') Logout

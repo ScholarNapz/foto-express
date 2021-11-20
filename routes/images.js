@@ -1,15 +1,13 @@
 var express = require('express');
 var router = express.Router();
-
 var fs = require('fs');
-
+const { body, validationResult } = require('express-validator');
 //! to format date string
 const moment = require('moment');
 //! to get full path of of file- to rip extension
 const path = require('path');
 
 const sharp = require('sharp');
-
 
 
 let imageName = null
@@ -49,9 +47,6 @@ const upload = multer({
 });
 
 
-
-
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
     res.render('index', { title: 'Express' });
@@ -60,6 +55,163 @@ router.get('/', function(req, res, next) {
 router.get('/upload', function(req, res, next) {
     res.render('upload', { title: 'Express' });
 });
+
+router.get('/view/:id/', function(req, res, next) {
+
+    const images = req.db.get('images');
+
+    images.findOne({ name: req.params.id }).then((image) => {
+        if (image.username === req.user.username) {
+            res.render('editImage', { title: 'Express', image: image });
+        } else {
+            res.render('viewImage', { title: 'Express', image: image });
+        }
+
+    });
+
+});
+
+
+router.get('/edit/:id/removetag/:tag', function(req, res, next) {
+
+
+    const images = req.db.get('images');
+    images.findOne({ name: req.params.id }).then((image) => {
+        if (image.username === req.user.username) {
+            images.update({ name: req.params.id }, { $pull: { 'tags': req.params.tag } });
+        }
+        res.location('/images/view/' + req.params.id + '/#addtag');
+        res.redirect('/images/view/' + req.params.id + '/#addtag');
+    });
+});
+
+router.get('/edit/:id/removecollection/:collection', (req, res, next) => {
+
+    const images = req.db.get('images');
+    images.findOne({ name: req.params.id }).then((image) => {
+        if (image.username === req.user.username) {
+            images.update({ name: req.params.id }, { $pull: { 'collections': req.params.collection } });
+        }
+        res.location('/images/view/' + req.params.id + '/#addcollection');
+        res.redirect('/images/view/' + req.params.id + '/#addcollection');
+    });
+});
+
+router.post('/edit/:id/addtag/', [
+    body('addtag', 'empty').trim().escape(),
+    body('addtag', 'empty').not().isEmpty(),
+], function(req, res, next) {
+    // 
+    const images = req.db.get('images');
+
+
+    images.findOne({ name: req.params.id }).then((image) => {
+        if (image.username === req.user.username) {
+
+            if (validationResult(req).isEmpty() && (req.body.addtag.trim() !== '') && (req.body.addtag.trim() !== '.') && (req.body.addtag.trim() !== '?')) {
+                images.find({ name: req.params.id, tags: { $in: [req.body.addtag] } }).then((tag) => {
+
+                    if (tag.length === 0) {
+                        images.update({ name: req.params.id }, { $push: { tags: req.body.addtag } }).then((image) => {
+                            res.location('/images/view/' + req.params.id + '/#addtag');
+                            res.redirect('/images/view/' + req.params.id + '/#addtag');
+                        });
+
+                    } else {
+                        res.location('/images/view/' + req.params.id + '/#addtag');
+                        res.redirect('/images/view/' + req.params.id + '/#addtag');
+
+                    }
+
+                });
+            } else {
+                res.location('/images/view/' + req.params.id + '/#addtag');
+                res.redirect('/images/view/' + req.params.id + '/#addtag');
+            };
+        } else {
+            res.location('/images/view/' + req.params.id + '/#addtag');
+            res.redirect('/images/view/' + req.params.id + '/#addtag');
+        }
+    });
+});
+
+
+
+
+router.post('/edit/:id/addcollection/', [
+    body('addcollection', 'empty').trim().escape(),
+    body('addcollection', 'empty').not().isEmpty(),
+], function(req, res, next) {
+
+    const images = req.db.get('images');
+    const user = req.db.get('users');
+    images.findOne({ name: req.params.id }).then((image) => {
+        console.log('_-_-_-_-__');
+        console.log(image.username + ' ' + req.user.username);
+        if (image.username === req.user.username) {
+            if (validationResult(req).isEmpty() && (req.body.addcollection.trim() !== '') && (req.body.addcollection.trim() !== '.') && (req.body.addcollection.trim() !== '?')) {
+                images.find({ name: req.params.id }).then((col) => {
+                    console.log(col);
+                    console.log('_-_-_');
+                    console.log(req.params.id);
+
+                    if (col.include(req.body.addcollection)) {
+
+                        user.find()
+
+                        if (col.include(req.body.addcollection)) {
+
+                            user.update({ username: req.user.username }, { $push: { collections: req.body.addcollection } }).then(() => {
+                                console.log('---------');
+                                console.log(req.user.username);
+                                console.log(req.body.addcollection);
+                                images.update({ name: req.params.id }, { $push: { collections: req.body.addcollection } }).then((image) => {
+                                    res.location('/images/view/' + req.params.id + '/#addcollection');
+                                    res.redirect('/images/view/' + req.params.id + '/#addcollection');
+                                });
+                            });
+                        }
+
+                    } else {
+                        res.location('/images/view/' + req.params.id + '/#addcollection');
+                        res.redirect('/images/view/' + req.params.id + '/#addcollection');
+
+                    }
+
+                });
+            } else {
+                res.location('/images/view/' + req.params.id + '/#addcollection');
+                res.redirect('/images/view/' + req.params.id + '/#addcollection');
+            };
+        } else {
+            res.location('/images/view/' + req.params.id + '/#addcollection');
+            res.redirect('/images/view/' + req.params.id + '/#addcollection');
+        }
+    });
+});
+
+router.post('/edit/:id/description/', [
+    body('description', 'empty').trim().escape(),
+    body('description', 'empty').not().isEmpty(),
+], function(req, res, next) {
+
+    const images = req.db.get('images');
+    images.findOne({ name: req.params.id }).then((image) => {
+        if (image.username === req.user.username) {
+            console.log('123456');
+            console.log(req.body.description);
+            images.update({ name: req.params.id }, { $set: { description: req.body.description } }).then((image) => {
+                res.location('/images/view/' + req.params.id + '/#description');
+                res.redirect('/images/view/' + req.params.id + '/#description');
+            });
+        } else {
+            res.location('/images/view/' + req.params.id + '/#description');
+            res.redirect('/images/view/' + req.params.id + '/#description');
+        }
+    });
+});
+
+
 
 router.post('/upload', upload.single('upload-image'), (req, res, next) => {
     let dirName = (__dirname + '').split('/');
@@ -84,20 +236,25 @@ router.post('/upload', upload.single('upload-image'), (req, res, next) => {
             });
     }
 
-    const db = require('monk')('localhost/fotodb');
-    const images = db.get('images');
+    //
+    const images = req.db.get('images');
 
-    const name = imageName;
+    console.log('123456789');
+    console.log(imageName);
+    let name = imageName.split('.');
+    console.log(name);
+    name.pop();
+    console.log(name);
     const imageLoc = '/uploads/' + imageName;
     const thumbnailLoc = '/thumbnails/' + imageName;
     const username = 'mario';
     const description = '';
-    const collections = '';
-    const tags = '';
+    const collections = [];
+    const tags = [];
     const date = moment().toISOString();
 
     images.insert({
-        name: name,
+        name: name[0],
         location: imageLoc,
         thumbnail: thumbnailLoc,
         username: username,

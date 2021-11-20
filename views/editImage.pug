@@ -1,0 +1,44 @@
+extends layout
+
+block content
+  section.section-image-view.container-small.flex-col.pad-hor
+    a(href=`/users/${image.username}`)
+      h3 #{image.username}
+    .image-display
+      img(src=`${image.location}` alt=`${image.name}`)
+    .details-container.flex-col
+      .flex-col
+        .flex-row.flex-gap
+          h4(style='align-self:flex-start') Description
+          form( style='flex-grow: 1' method='post', action=`/images/edit/${image.name}/description/`) 
+            textarea.description-box(name="description" id='description')
+              != image.description
+            button.btn.btn-fir-full(type='submit' name='submit' value='') Save
+
+      .flex-col
+        .flex-row.flex-gap
+          h4 Tags
+          .search-bar
+                form(method='post', action=`/images/edit/${image.name}/addtag/`)
+                  input#addtag(type='text' name='addtag' placeholder='Add Tag')
+                  button(type='submit' name='submit' value='') Add
+        if image.tags
+          .tags-container
+            each tag, i in image.tags
+              a.btn.btn-margin.btn-medSlate-full(href=`/images/edit/${image.name}/removetag/${tag}`) #{tag}
+      .flex-col
+        .flex-row.flex-gap 
+          h4 Collections
+          .search-bar
+            form(method='post', action=`/images/edit/${image.name}/addcollection/`)
+              input#addcollection(type='text' name='addcollection' placeholder='Add Collection')
+              button(type='submit' name='submit' value='') Add
+          
+        if image.collections
+          .tags-container
+            each collection, i in image.collections  
+              a.btn.btn-margin.btn-rustic-full(href=`/images/edit/${image.name}/removecollection/${collection}`) #{collection}
+
+    //- script(src="/ckeditor/ckeditor.js")
+    //- script 
+    //-   | CKEDITOR.replace('description')

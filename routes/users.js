@@ -14,93 +14,6 @@ function upload(e) {
     res.redirect('/images/upload');
 }
 
-/* GET users listing. */
-router.get('/',
-    // ensureAuthenticated,
-    function(req, res, next) {
-        const db = req.db;
-        const users = db.get('users')
-        const images = db.get('images');
-
-        //!------CHANGE ALL INSTANCES OF MARIO
-
-        const getCollectionImages = (collections, username) => {
-            return new Promise((resolve, reject) => {
-                let collectionObj = {};
-                foundAlbums = false;
-
-                collections.forEach(element => {
-                    images.findOne({ username: username, collections: [element] }).then((img) => {
-                        if (img !== null) {
-                            const image = JSON.parse(JSON.stringify(img)).thumbnail;
-                            collectionObj[element] = image;
-                        } else {
-                            users.update({ username: username }, { $pull: { collections: element } });
-                        }
-
-                    });
-                });
-
-                setTimeout(() => {
-                    resolve(collectionObj);
-                }, 5);
-            });
-        };
-
-        const getCollectionDetails = (username) => {
-            return new Promise((resolve, reject) => {
-
-
-                users.findOne({ username: username }, 'collections').then((userColls) => {
-
-                    const collections = JSON.parse(JSON.stringify(userColls)).collections;
-                    if (collections.length > 0) {
-
-                        getCollectionImages(collections, username).then(collList => {
-                            resolve(collList);
-                        });
-                    } else {
-                        resolve('{}');
-                    }
-                });
-
-
-
-            });
-        };
-
-        const createUserPage = (user) => {
-            return new Promise((resolve, reject) => {
-                const username = JSON.parse(JSON.stringify(user)).username;
-
-                images.find({ username: username }, {}).then((images) => {
-
-                    getCollectionDetails(username).then((colls) => {
-                        res.render('user', {
-                            images: images,
-                            user: user,
-                            colls: colls
-                        });
-
-                        resolve('Done');
-                    });
-
-                });
-            });
-        };
-
-        users.findOne({ username: 'mario' }).then((user) => {
-            createUserPage(user).then((result) => {});
-        });
-
-    });
-
-function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated) {
-        return next();
-    }
-}
-
 
 router.get('/logout', function(req, res, ) {
     req.logOut();
@@ -109,42 +22,169 @@ router.get('/logout', function(req, res, ) {
 });
 
 
+/* GET users listing. */
+router.get('/profile/:usr',
+    function(req, res, next) {
+        const db = req.db;
+        const users = db.get('users')
+        const images = db.get('images');
+        // if (typeof myVar === 'undefined'){}
+        console.log('123');
+        console.log(req.user.username);
+        console.log(req.params.usr);
+
+        users.findOne({ username: req.params.usr }).then((user) => {
+
+            console.log('...1');
+            console.log(req.params.usr);
+            console.log(user.collections);
+            getCollectionImages(unique(user.collections), user.username).then((collection) => {
+                images.find({ username: user.username }).then((imgs) => {
+                    console.log('..6');
+
+                    console.log(imgs);
+                    res.render('user', {
+                        images: imgs,
+                        user: user,
+                        colls: collection
+                    });
+                });
+            })
+        });
+
+        function unique(collections) {
+            return collections.sort().filter(function(item, pos, ary) {
+                return !pos || item != ary[pos - 1];
+            });
+        }
+
+        const getCollectionImages = (collections, username) => {
+            let collectionObj = {}
+
+            return new Promise((resolve, reject) => {
+                let itemsDone = 0;
+                collections.forEach(element => {
+                    images.findOne({ username: username }).then((image) => {
+
+                        collectionObj[element] = image.thumbnail;
+                        itemsDone++;
+                        if (itemsDone === collections.length) {
+
+                            resolve(collectionObj);
+                        }
+                    });
+                });
+            });
+        };
+
+        // const getImageLocations = (collections, username) => {
+        //     let collectionObj = {}
+
+        //     return new Promise((resolve, reject) => {
+        //         let itemsDone = 0;
+        //         collections.forEach(element => {
+        //             images.findOne({ username: username }).then((image) => {
+
+        //                 collectionObj[element] = image.name;
+        //                 itemsDone++;
+        //                 if (itemsDone === collections.length) {
+
+        //                     resolve(collectionObj);
+        //                 }
+        //             });
+        //         });
+
+        //     });
+        // });
+
+        // const getCollectionImages = (collections, username) => {
+        //     return new Promise((resolve, reject) => {
+        //         let collectionObj = {};
+        //         foundAlbums = false;
+
+        //         collections.forEach(element => {
+        //             images.findOne({ username: username, collections: [element] }).then((img) => {
+        //                 if (img !== null) {
+        //                     const image = JSON.parse(JSON.stringify(img)).thumbnail;
+        //                     collectionObj[element] = image;
+        //                 } else {
+        //                     users.update({ username: username }, { $pull: { collections: element } });
+        //                 }
+
+        //             });
+        //         });
+
+        //         setTimeout(() => {
+        //             resolve(collectionObj);
+        //         }, 50);
+        //     });
+        // };
+
+        // const getCollectionDetails = (username) => {
+        //     return new Promise((resolve, reject) => {
+
+        //         // users.findOne({ username: username }, 'collections').then((userColls) => {
+        //         users.findOne({ username: username }, 'collections').then((userColls) => {
+
+        //             const collections = JSON.parse(JSON.stringify(userColls)).collections;
+        //             console.log('-');
+
+        //             console.log(collections);
+
+
+        //             if (collections.length > 0) {
+
+        //                 getCollectionImages(collections, username).then(collList => {
+        //                     resolve(collList);
+        //                 });
+        //             } else {
+        //                 resolve('{}');
+        //             }
+        //         });
 
 
 
-// router.post('/login', passport.authenticate('local', { failureRedirect: '/', failureFlash: 'Invalid Username or Password' }), [
-//         body('username', 'Username is Required').not().isEmpty(),
-//         body('password', 'Password is Required').not().isEmpty(),
-//     ],
-//     function(req, res, next) {
-//         let username = req.body.username;
-//         let password = req.body.password;
+        //     });
+        // };
 
-//         const errors = validationResult(req);
-//         console.log(errors);
+        // const createUserPage = (user) => {
+        //     return new Promise((resolve, reject) => {
+        //         const username = JSON.parse(JSON.stringify(user)).username;
+        //         // console.log(username);
 
-//         if (!errors.isEmpty()) {
-//             res.render('landing', {
-//                 errors: errors.array()
-//             });
-//         } else {
-//             // If there is no error do this
-//             req.flash('success', 'Login Successful')
-//                 // res.redirect('/users/' + req.user.username);
-//             console.log('No Errors...');
+        //         images.find({ username: username }).then((images) => {
+
+        //             console.log(images);
+
+        //             getCollectionDetails(username).then((colls) => {
+        //                 resolve(colls);
+        //             });
+
+        //         });
+        //     });
+        // };
+
+        // users.findOne({ username: req.params.usr }).then((user) => {
+        //     // console.log(user);
+        //     createUserPage(user).then((colls) => {
+        //         console.log();
+        //         console.log(images);
+        //         res.render('user', {
+        //             images: images,
+        //             user: user,
+        //             colls: colls
+        //         });
+        //     });
+        // });
+
+    });
 
 
-//         };
-//     });
 
-
-
+// function ensureAuthenticated(req, res, next) {
+//     if (req.isAuthenticated) {
+//         return next();
+//     }
+// }
 
 module.exports = router;
-
-
-// const mongoConnect = require('../models/user');
-
-// mongoConnect((users) => {
-//     console.log(users);
-// });

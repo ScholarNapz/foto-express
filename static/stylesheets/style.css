@@ -84,6 +84,7 @@ h4 {
 .btn-rustic-full,
 .btn-rustic-full:visited {
     background-color: #3D131B;
+    color: #D0D8D1;
     box-shadow: 1px 1px 1px 0px #250B10;
 }
 
@@ -277,6 +278,7 @@ input {
 .details-container {
     max-width: 600px;
     display: flex;
+    gap: 20px;
 }
 
 
@@ -350,7 +352,9 @@ img.profile-image {
 }
 
 .section-profile-user {
-    flex-shrink: 0 1 auto;
+    /* flex-shrink: 0 1 auto; */
+    flex-grow: 1;
+    max-width: 50%;
 }
 
 .profile-bio-box {
@@ -470,6 +474,7 @@ img.profile-image {
 .tags-container {
     display: flex;
     flex-wrap: wrap;
+    gap: 5px
 }
 
 
@@ -593,6 +598,15 @@ ul.success li {
     display: flex;
 }
 
+.flex-gap {
+    align-items: center;
+    gap: 20px;
+}
+
+.flex-nowrap {
+    flex-wrap: nowrap;
+}
+
 .pad-hor {
     padding: 0 40px;
 }
@@ -632,4 +646,13 @@ ul.success li {
     color: #D0D8D3;
     border-top-right-radius: 2px;
     border-bottom-right-radius: 2px;
+}
+
+.description-box {
+    width: 100%;
+    background-color: rgba(211, 208, 216, 0.486);
+    color: #140B25;
+    padding: 10px;
+    word-wrap: break-word;
+    height: fit-content;
 }

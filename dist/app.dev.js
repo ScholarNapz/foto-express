@@ -10,39 +10,24 @@ var cookieParser = require('cookie-parser');
 
 var logger = require('morgan');
 
-var resizeOptimizeImages = require('resize-optimize-images'); //? missing 
-
-
-var favicon = require('serve-favicon');
-
-var bodyParser = require('body-parser');
-
 var session = require('express-session'); //? include passport
 
 
 var passport = require('passport');
 
-var LocalStratery = require('passport-local').Strategy; //? include bcrypt
-
-
 var bcrypt = require('bcryptjs');
 
 var multer = require('multer');
 
-var flash = require('connect-flash'); //? DB
+var flash = require('connect-flash'); //? MONK
 
 
-var mongo = require('mongodb');
-
-var mongoose = require('mongoose'); //? MONK
-
-
-var db = require('monk')('localhost/fotodb'); //?MONGOOSE
-//let db = mongoose.connection;
-//? Moment
+var db = require('monk')('localhost/fotodb'); //? Moment
 
 
 var moment = require('moment');
+
+var sharp = require('sharp');
 
 var landingRouter = require('./routes/landing');
 
@@ -59,25 +44,20 @@ app.set('view engine', 'pug');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({
-  extended: false
+  extended: true
 }));
 app.use(cookieParser());
 app.use(express["static"](path.join(__dirname, 'static')));
-app.use(resizeOptimizeImages()); //? missing middleware
+app.use('/uploads/', express["static"](path.join(__dirname, 'static/uploads')));
+app.use('/thumbnails/', express["static"](path.join(__dirname, 'static/thumbnails')));
+
+require('dotenv').config(); //? missing middleware
 //multer
+
 
 var upload = multer({
   dest: 'static/uploads'
-}); //handle sessions
-
-app.use(session({
-  secret: 'secret',
-  saveUninitialized: true,
-  resave: true
-})); //passport
-
-app.use(passport.initialize());
-app.use(passport.session()); //messages middleware
+}); //messages middleware
 
 app.use(require('connect-flash')());
 app.use(function (req, res, next) {
@@ -88,10 +68,49 @@ app.use(function (req, res, next) {
 app.use(function (req, res, next) {
   req.db = db;
   next();
-}); //!------------------
+}); // //!------------------
+// app.get('*', (req, res, next) => {
+//     res.locals.user = req.user || null;
+//     next();
+// });
+//handle sessions
 
-app.get('*', function (req, res, next) {
-  res.locals.user = req.user || null;
+var MongoStore = require('connect-mongo');
+
+var sessionStore = MongoStore.create({
+  mongoUrl: process.env.DB_STRING,
+  collectionName: 'sessions',
+  connectionOptions: {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }
+});
+app.use(session({
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: true,
+  store: sessionStore,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 //? 1 Day
+
+  }
+}));
+/*-----------------------
+ PASSPORT
+ -------------------------------*/
+
+require('./config/passport');
+
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(function (req, res, next) {
+  console.log('=-=-=-=-=-=-=-=-=-=');
+  console.log(req.session);
+  console.log(req.user);
+  next();
+});
+app.use(function (req, res, next) {
+  res.locals.currentUser = req.user;
   next();
 });
 app.use('/', landingRouter);

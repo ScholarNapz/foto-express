@@ -4,29 +4,17 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
-//? missing 
-const favicon = require('serve-favicon');
-const bodyParser = require('body-parser');
-
 const session = require('express-session');
 
 //? include passport
 const passport = require('passport');
-const LocalStratery = require('passport-local').Strategy;
-//? include bcrypt
+
 const bcrypt = require('bcryptjs');
-
 const multer = require('multer');
-
 const flash = require('connect-flash');
-//? DB
-const mongo = require('mongodb');
-const mongoose = require('mongoose');
 //? MONK
 var db = require('monk')('localhost/fotodb');
 
-//?MONGOOSE
-//let db = mongoose.connection;
 
 //? Moment
 const moment = require('moment');
@@ -47,25 +35,19 @@ app.set('view engine', 'pug');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'static')));
-app.use('/uploads/', express.static(path.join(__dirname,'static/uploads')));
-app.use('/thumbnails/', express.static(path.join(__dirname,'static/thumbnails')));
+app.use('/uploads/', express.static(path.join(__dirname, 'static/uploads')));
+app.use('/thumbnails/', express.static(path.join(__dirname, 'static/thumbnails')));
 
+require('dotenv').config();
 
 //? missing middleware
 //multer
 const upload = multer({ dest: 'static/uploads' });
-//handle sessions
-app.use(session({
-    secret: 'secret',
-    saveUninitialized: true,
-    resave: true
-}));
-//passport
-app.use(passport.initialize());
-app.use(passport.session());
+
+
 //messages middleware
 app.use(require('connect-flash')());
 app.use(function(req, res, next) {
@@ -79,11 +61,53 @@ app.use((req, res, next) => {
     next();
 });
 
-//!------------------
-app.get('*', (req, res, next) => {
-    res.locals.user = req.user || null;
+// //!------------------
+// app.get('*', (req, res, next) => {
+//     res.locals.user = req.user || null;
+//     next();
+// });
+
+//handle sessions
+const MongoStore = require('connect-mongo');
+
+const sessionStore = MongoStore.create({
+    mongoUrl: process.env.DB_STRING,
+    collectionName: 'sessions',
+    connectionOptions: {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    }
+});
+
+app.use(session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 //? 1 Day
+    }
+}));
+/*-----------------------
+ PASSPORT
+ -------------------------------*/
+require('./config/passport');
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use((req, res, next) => {
+    console.log('=-=-=-=-=-=-=-=-=-=');
+    console.log(req.session);
+    console.log(req.user);
     next();
 });
+
+app.use(function(req, res, next) {
+    res.locals.currentUser = req.user;
+    next();
+})
+
 
 app.use('/', landingRouter);
 app.use('/users', usersRouter);
@@ -108,62 +132,7 @@ app.use(function(err, req, res, next) {
 });
 
 
-/*
-! UPLOAD IMAGES
-*/
 
-
-
-
-// let imageName = null
-
-// //! file uploads
-// const storage = multer.diskStorage({
-//     destination: (req, file, cb) => {
-//         cb(null, '/static/uploads/');
-//     },
-//     filename: (req, file, cb) => {
-//         imageName = moment(new Date()).format('YMDHHmmssSSSS') + '.' + file.originalname.split('.').pop();
-//         console.log(imageName);
-//         cb(null, imageName);
-//     }
-// });
-
-// //! validate file type by mime
-// const fileFilter = (req, file, cb) => {
-//     //? reject file cb(null, false)
-//     //? accept file cb(null, true)
-//     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/bmp' || file.mimetype === 'image/gif') {
-//         cb(null, true);
-//     } else {
-//         cb(new Error('File is not in image format.'), false);
-//     }
-// };
-
-
-// const upload = multer({
-//     storage: storage,
-
-//     limits: { //? set file upload limit
-//         fileSize: 1024 * 1024 * 5 //! Max upload of 5mb
-//     },
-
-//     fileFilter: fileFilter
-// });
-
-
-// app.post('/upload', upload.single('upload-image'), (req, res, next) => {
-//     console.log("0000");
-//     console.log(imageName);
-//     sharp('static/uploads/' + imageName).resize(300, 300).toFile('static/thumbnails/' + imageName, (err, info) => {
-//         console.log(__dirname);
-//     });
-
-
-//     res.location('/gallery')
-//     res.redirect('/gallery');
-
-// });
 
 
 module.exports = app;
