@@ -17,17 +17,16 @@ block content
             .description-box
               != user.bio
       .line
-      .gallery
-        h3 Galleries
-        .generate-grid.align-below
-
-          if colls 
+      if colls
+        .gallery
+          h3 Galleries
+          .generate-grid.align-below
             each val, key in colls
               .box.box-detailed
                 .box-image
-                  a(href='#Gallery')
+                  a(href=`/gallery/collection/${user.username}/${key}`)
                     img(src=`${val}` alt='cat')
-                a(href='#Gallery') #{key}
+                a(href=`/gallery/collection/${user.username}/${key}`) #{key}
 
       .gallery
         h3 All Photos
@@ -35,6 +34,6 @@ block content
           if images
             each image, i in images 
               .box.box-image
-                a(href='#')
-                  img(src=`${image.thumbnail}` alt='img')
+                a(href=`/images/view/${image.name}`)
+                  img(src=`${image.thumbnail}` alt=`${image.name}`)
 

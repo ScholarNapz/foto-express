@@ -167,6 +167,13 @@ nav {
     color: #D8D0D1
 }
 
+.login-head {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    padding: 20px;
+}
+
 
 /*-----------------------------
 * LANDING
@@ -461,6 +468,7 @@ img.profile-image {
     width: 100%;
     align-items: center;
     padding: 40px;
+    /* padding: 0 40px 40px 40px; */
 }
 
 

@@ -21,9 +21,54 @@ router.get('/', isAuth, function (req, res, next) {
   }).then(function (images) {
     res.render('gallery', {
       title: 'Gallery',
+      isCollection: false,
+      username: req.user.username,
       images: images
     });
   });
 });
-router.post('/tags', isAuth, function (req, res, next) {});
+router.post('/tags', isAuth, function (req, res, next) {
+  res.location('./tags/' + req.body.search);
+  res.redirect('./tags/' + req.body.search);
+});
+router.get('/tags/:id', isAuth, function (req, res, next) {
+  var images = req.db.get('images');
+  images.find({
+    tags: {
+      $regex: ".*" + req.params.id + ".*"
+    }
+  }, {
+    sort: {
+      date: -1
+    }
+  }).then(function (imgs) {
+    console.log(imgs);
+    res.render('gallery', {
+      title: 'Tags Search: ' + req.params.id,
+      username: req.user.username,
+      isCollection: false,
+      images: imgs
+    });
+  });
+});
+router.get('/collection/:usr/:id', isAuth, function (req, res, next) {
+  var images = req.db.get('images');
+  images.find({
+    username: req.params.usr,
+    collections: req.params.id
+  }, {
+    sort: {
+      date: -1
+    }
+  }).then(function (imgs) {
+    console.log(imgs);
+    res.render('gallery', {
+      title: req.params.usr + ': ' + req.params.id,
+      isCollection: true,
+      username: req.user.username,
+      usr: req.params.usr,
+      images: imgs
+    });
+  });
+});
 module.exports = router;

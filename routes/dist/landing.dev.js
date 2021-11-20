@@ -14,19 +14,20 @@ var app = require('../app');
 
 var moment = require('moment');
 
-var passport = require('passport');
+var passport = require('passport'); // router.use((req, res, next) => {
+//     console.log(req.session);
+//     console.log(req.user);
+//     next();
+// });
 
-router.use(function (req, res, next) {
-  console.log(req.session);
-  console.log(req.user);
-  next();
-});
+
 router.post('/login', [body('username', 'Username is Required').not().isEmpty().trim().escape(), body('password', 'Password is Required').not().isEmpty().trim().escape()], passport.authenticate('local', {
   failureRedirect: '/',
   failureFlash: 'Invalid Username or Password'
 }), function (req, res) {
   console.log('login:');
   console.log(req.body.username);
+  res.location('/gallery');
   res.redirect('/gallery');
 });
 /* GET home page. */

@@ -53,14 +53,10 @@ var upload = multer({
 });
 /* GET home page. */
 
-router.get('/', function (req, res, next) {
-  res.render('index', {
-    title: 'Express'
-  });
-});
 router.get('/upload', function (req, res, next) {
   res.render('upload', {
-    title: 'Express'
+    title: 'Uplaod',
+    username: req.user.username
   });
 });
 router.get('/view/:id/', function (req, res, next) {
@@ -75,7 +71,8 @@ router.get('/view/:id/', function (req, res, next) {
       });
     } else {
       res.render('viewImage', {
-        title: 'Express',
+        title: 'image.name',
+        username: req.user.username,
         image: image
       });
     }
@@ -168,43 +165,43 @@ router.post('/edit/:id/addcollection/', [body('addcollection', 'empty').trim().e
     name: req.params.id
   }).then(function (image) {
     console.log('_-_-_-_-__');
+    console.log(image);
     console.log(image.username + ' ' + req.user.username);
 
     if (image.username === req.user.username) {
       if (validationResult(req).isEmpty() && req.body.addcollection.trim() !== '' && req.body.addcollection.trim() !== '.' && req.body.addcollection.trim() !== '?') {
         images.find({
-          name: req.params.id
+          name: req.params.id,
+          collections: {
+            $in: [req.body.addcollection]
+          }
         }).then(function (col) {
+          console.log('NOOO');
           console.log(col);
-          console.log('_-_-_');
-          console.log(req.params.id);
+          console.log('N111'); // console.log(col.collections);
 
-          if (col.include(req.body.addcollection)) {
-            user.find();
+          console.log('qwe');
 
-            if (col.include(req.body.addcollection)) {
-              user.update({
-                username: req.user.username
+          if (col.length === 0) {
+            // if (col.include(req.body.addcollection)) {
+            user.update({
+              username: req.user.username
+            }, {
+              $push: {
+                collections: req.body.addcollection
+              }
+            }).then(function () {
+              images.update({
+                name: req.params.id
               }, {
                 $push: {
                   collections: req.body.addcollection
                 }
-              }).then(function () {
-                console.log('---------');
-                console.log(req.user.username);
-                console.log(req.body.addcollection);
-                images.update({
-                  name: req.params.id
-                }, {
-                  $push: {
-                    collections: req.body.addcollection
-                  }
-                }).then(function (image) {
-                  res.location('/images/view/' + req.params.id + '/#addcollection');
-                  res.redirect('/images/view/' + req.params.id + '/#addcollection');
-                });
+              }).then(function (image) {
+                res.location('/images/view/' + req.params.id + '/#addcollection');
+                res.redirect('/images/view/' + req.params.id + '/#addcollection');
               });
-            }
+            });
           } else {
             res.location('/images/view/' + req.params.id + '/#addcollection');
             res.redirect('/images/view/' + req.params.id + '/#addcollection');
@@ -273,7 +270,7 @@ router.post('/upload', upload.single('upload-image'), function (req, res, next) 
   console.log(name);
   var imageLoc = '/uploads/' + imageName;
   var thumbnailLoc = '/thumbnails/' + imageName;
-  var username = 'mario';
+  var username = req.user.username;
   var description = '';
   var collections = [];
   var tags = [];

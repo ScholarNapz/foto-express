@@ -43,21 +43,7 @@ var verifyCallback = function verifyCallback(username, password, done) {
     }
   })["catch"](function (err) {
     done(err);
-  }); // const db = require('monk')(process.env.DB_STRING);
-  // const user = db.get('users');
-  // user.findOne({ username: username })
-  //     .then((user) => {
-  //         if (!user) { return done(null, false) }
-  //         const isValid = validatePassword(password, user.hash, user.salt);
-  //         if (isValid) {
-  //             return done(null, user);
-  //         } else {
-  //             return done(null, false);
-  //         }
-  //     })
-  //     .catch((err) => {
-  //         done(err);
-  //     });
+  });
 }; // const strategy = new LocalStrategy(customField, verifyCallback);
 
 

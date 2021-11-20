@@ -61,4 +61,6 @@ typings/
 .next
 
 # OTHER
-howto/
+static/thumbnails/
+static/uploads/
+

@@ -2,7 +2,7 @@ extends layout
 
 block content
   section.section-image-view.container-small.flex-col.pad-hor
-    a(href=`/users/${image.username}`)
+    a(href=`/users/profile/${image.username}`)
       h3 #{image.username}
     .image-display
       img(src=`${image.location}` alt=`${image.name}`)

@@ -5,7 +5,11 @@ block content
       .container-large.flex-col
         .flex-row
           .gallery-nav
-            h3 Gallery
+            if isCollection
+              a(href=`/users/profile/${usr}`)
+                h3 #{title}
+            else
+              h3 #{title}
             .gap
             .search-bar
               form(method='post', action='/gallery/tags')

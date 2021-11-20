@@ -6,11 +6,11 @@ const app = require('../app');
 const moment = require('moment');
 const passport = require('passport');
 
-router.use((req, res, next) => {
-    console.log(req.session);
-    console.log(req.user);
-    next();
-});
+// router.use((req, res, next) => {
+//     console.log(req.session);
+//     console.log(req.user);
+//     next();
+// });
 
 router.post('/login', [
         body('username', 'Username is Required').not().isEmpty().trim().escape(),
@@ -20,6 +20,8 @@ router.post('/login', [
 
         console.log('login:');
         console.log(req.body.username);
+
+        res.location('/gallery');
         res.redirect('/gallery');
     });
 
