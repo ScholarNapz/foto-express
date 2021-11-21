@@ -1,0 +1,112 @@
+@media (max-width: 2660px) {
+    .generate-grid {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}
+
+@media (max-width: 2340px) {
+    .generate-grid {
+        grid-template-columns: repeat(7, 1fr);
+    }
+}
+
+@media (max-width: 2200px) {
+    .generate-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+@media (max-width: 1690px) {
+    .generate-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (max-width: 1380px) {
+    .generate-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1360px) {
+    .container-small {
+        width: 100%;
+    }
+}
+
+@media (max-width: 1230px) {
+    .landing {
+        flex-direction: column-reverse;
+        align-items: center;
+        justify-content: center;
+        align-content: center;
+    }
+    .hero {
+        margin: 40px;
+        justify-self: center;
+        flex-basis: auto;
+        flex-grow: 0;
+        flex-shrink: 1;
+        width: 280px;
+    }
+    .landing-form {
+        flex-basis: auto;
+        margin: 0;
+        padding-bottom: 20px;
+        justify-self: flex-start;
+    }
+    .landing .gap {
+        flex-grow: 0;
+    }
+}
+
+@media (max-width: 1170px) {}
+
+@media (max-width: 1050px) {
+    .generate-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1010px) {
+    .user-profile {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .profile-image {
+        width: auto;
+        height: auto;
+    }
+    .section-profile-image {
+        flex-basis: auto;
+        width: 200px;
+    }
+}
+
+@media (max-width: 740px) {
+    .generate-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 660px) {
+    .container-small {
+        width: 100%;
+        margin: 0;
+    }
+    .hor-pad {
+        width: 100%;
+        padding: 0 0;
+    }
+    .gallery {
+        padding: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    .generate-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}

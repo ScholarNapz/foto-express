@@ -6,111 +6,245 @@ var router = express.Router();
 
 var passport = require('passport');
 
-var LocalStrategy = require('passport-local').Strategy; //? DB
+var isAuth = require('../lib/authMiddleware').isAuth;
+
+var fs = require('fs');
+
+var _require = require("child_process"),
+    exec = _require.exec; //? DB
 
 
-var mongodb = require('mongodb');
+var db = require('monk')('localhost/fotodb'); // const users = db.get('users');
 
-var db = require('monk')('localhost/fotodb');
+
+var imageName = null; //! file uploads
+
+var multer = require('multer');
+
+var storage = multer.diskStorage({
+  destination: function destination(req, file, cb) {
+    cb(null, 'static/.temp/');
+  },
+  filename: function filename(req, file, cb) {
+    imageName = req.user.username + '.' + file.originalname.split('.').pop();
+    cb(null, imageName);
+  }
+}); //! validate file type by mime
+
+var fileFilter = function fileFilter(req, file, cb) {
+  //? reject file cb(null, false)
+  //? accept file cb(null, true)
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/pjpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/bmp') {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+var upload = multer({
+  storage: storage,
+  limits: {
+    //? set file upload limit
+    fileSize: 1024 * 1024 * 15 //! Max upload of 15mb
+
+  },
+  fileFilter: fileFilter
+});
+router.post('/upload', isAuth, upload.single('upload-image'), function (req, res, next) {
+  if (imageName !== null) {
+    var users = db.get('users');
+
+    var dirName = (__dirname + '').split('/');
+
+    dirName.pop();
+    var staticPath = '';
+    dirName.forEach(function (folder) {
+      staticPath += folder + '/';
+    });
+    var tempFilePath = staticPath + 'static/.temp/' + imageName;
+    var saveFilePath = staticPath + 'static/profileimages/' + imageName;
+    var staticFilePath = '/profileimages/' + imageName;
+    var execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300";
+    exec(execLine, function (error, stdout, stderr) {
+      if (error) {
+        res.location('/users/myprofile/');
+        res.redirect('/users/myprofile/');
+        return;
+      }
+
+      var pathToTempPic = staticPath + 'static/.temp/' + imageName; // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
+
+      try {
+        fs.unlinkSync(pathToTempPic);
+      } catch (error) {
+        console.log("Delete error: ".concat(error));
+      }
+    });
+    users.update({
+      username: req.user.username
+    }, {
+      $set: {
+        profileimage: staticFilePath
+      }
+    });
+  }
+
+  res.location('/users/myprofile/');
+  res.redirect('/users/myprofile/');
+});
+router.post('/edit/bio/:id/', isAuth, function (req, res) {
+  var user = db.get('users');
+  user.update({
+    username: req.user.username
+  }, {
+    $set: {
+      bio: req.body.bio
+    }
+  });
+  res.location('/users/profile/' + req.params.id);
+  res.redirect('/users/profile/' + req.params.id);
+});
+router.get('/', isAuth, function (req, res) {
+  var users = db.get('users');
+  users.find({
+    $nor: [{
+      $and: [{
+        'username': req.user.username
+      }]
+    }]
+  }).then(function (usr) {
+    res.render('users', {
+      title: 'Users',
+      username: req.user.username,
+      users: usr
+    });
+  });
+});
 /* GET users listing. */
 
-
-router.get('/', // ensureAuthenticated,
-function (req, res, next) {
-  //!------CHANGE ALL INSTANCES OF MARIO
-  var db = req.db;
+router.get('/profile/:id/', isAuth, function (req, res) {
   var users = db.get('users');
   var images = db.get('images');
-  var user = null;
-  var collectionList = [];
-  var collectionThumbnail = [];
+
+  if (req.user.username === req.params.id) {
+    res.location('/users/myprofile');
+    res.redirect('/users/myprofile');
+  } else {
+    var _users = db.get('users');
+
+    var _images = db.get('images');
+
+    _users.findOne({
+      username: req.params.id
+    }).then(function (user) {
+      getCollectionImages(unique(user.collections), user.username, _images, _users).then(function (collection) {
+        _images.find({
+          username: user.username
+        }).then(function (imgs) {
+          res.render('user', {
+            title: user.username,
+            username: req.user.username,
+            images: imgs,
+            user: user,
+            colls: collection
+          });
+        });
+      });
+    });
+  }
+});
+router.get('/myprofile', isAuth, function (req, res) {
+  var users = db.get('users');
+  var images = db.get('images');
+  users.findOne({
+    username: req.user.username
+  }).then(function (user) {
+    getCollectionImages(unique(user.collections), user.username, images, users).then(function (collection) {
+      images.find({
+        username: user.username
+      }).then(function (imgs) {
+        res.render('myprofile', {
+          title: user.username,
+          username: req.user.username,
+          images: imgs,
+          user: user,
+          colls: collection
+        });
+      });
+    });
+  });
+});
+/*-------------------------------
+* FIND COLLECTIONS TO POPULATE COLLECTIONS OF USER
+-------------------------------------*/
+
+function unique(collections) {
+  return collections.sort().filter(function (item, pos, ary) {
+    return !pos || item != ary[pos - 1];
+  });
+}
+
+var getCollectionImages = function getCollectionImages(collections, username, images, users) {
   var collectionObj = {};
-  users.findOne({
-    username: 'mario'
-  }).then(function (users) {
-    user = users;
-  }); // users.findOne({ username: 'mario' }).then((users) => {
-  //     // collectionList = users;
-  // });
-
-  users.findOne({
-    username: 'mario'
-  }, 'collections').then(function (userColls) {
-    var collections = JSON.parse(JSON.stringify(userColls)).collections;
-
-    if (collections.length > 0) {
+  return new Promise(function (resolve, reject) {
+    if (collections.length == 0) {
+      resolve(collectionObj);
+    } else {
+      var itemsDone = 0;
       collections.forEach(function (element) {
-        collectionList.push(element);
         images.findOne({
-          username: 'mario',
-          collections: [element]
-        }).then(function (img) {
-          var image = JSON.parse(JSON.stringify(img)).thumbnail; // collectionThumbnail.push(image);
-          // console.log(image);
+          username: username,
+          collections: {
+            $in: [element]
+          }
+        }).then(function (image) {
+          try {
+            collectionObj[element] = image['thumbnail'];
+          } catch (error) {
+            users.update({
+              username: username
+            }, {
+              $pull: {
+                'collections': element
+              }
+            });
+          }
 
-          collectionObj[element] = image;
+          itemsDone++;
+
+          if (itemsDone === collections.length) {
+            resolve(collectionObj);
+          }
         });
       });
     }
-
-    images.find({
-      username: 'mario'
-    }, {}).then(function (images) {
-      res.render('user', {
-        images: images,
-        user: user,
-        colls: collectionObj // colls: collectionList,
-        // collsThumb: collectionThumbnail
-
-      });
-    });
-    console.log(JSON.parse(JSON.stringify(userColls)).collections);
   });
-  console.log('...1');
-  console.log(collectionList);
-  console.log('...2');
-  console.log(collectionThumbnail); // images.find({ username: 'mario' }, {}).then((images) => {
-  //     res.render('user', {
-  //         images: images,
-  //         user: user,
-  //         colls: collectionList,
-  //         collsThumb: collectionThumbnail
-  //     });
-  // });
+};
+
+router.post('/profile/search', isAuth, function (req, res) {
+  res.location('/users/profile/search/' + req.body.search);
+  res.redirect('/users/profile/search/' + req.body.search);
 });
-
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated) {
-    return next();
-  }
-}
-
-router.get('/logout', function (req, res) {
+router.get('/profile/search/:id', isAuth, function (req, res) {
+  var users = req.db.get('users');
+  users.find({
+    username: {
+      $regex: ".*" + req.params.id + ".*"
+    }
+  }, {
+    sort: {
+      date: -1
+    }
+  }).then(function (usr) {
+    res.render('users', {
+      title: 'Usernames containing "' + req.params.id + '"',
+      users: usr
+    });
+  });
+});
+router.get('/logout', isAuth, function (req, res) {
   req.logOut();
   req.flash('success', 'You are now logged out');
   res.redirect('/');
-}); // router.post('/login', passport.authenticate('local', { failureRedirect: '/', failureFlash: 'Invalid Username or Password' }), [
-//         body('username', 'Username is Required').not().isEmpty(),
-//         body('password', 'Password is Required').not().isEmpty(),
-//     ],
-//     function(req, res, next) {
-//         let username = req.body.username;
-//         let password = req.body.password;
-//         const errors = validationResult(req);
-//         console.log(errors);
-//         if (!errors.isEmpty()) {
-//             res.render('landing', {
-//                 errors: errors.array()
-//             });
-//         } else {
-//             // If there is no error do this
-//             req.flash('success', 'Login Successful')
-//                 // res.redirect('/users/' + req.user.username);
-//             console.log('No Errors...');
-//         };
-//     });
-
-module.exports = router; // const mongoConnect = require('../models/user');
-// mongoConnect((users) => {
-//     console.log(users);
-// });
+});
+module.exports = router;

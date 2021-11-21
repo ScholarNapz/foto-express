@@ -1,0 +1,26 @@
+extends layout
+
+block content
+    section.section-gallery
+      .container-large.flex-col
+        .flex-row
+          .gallery-nav
+            h3 #{title}
+            .gap
+            .search-bar
+              form(method='post', action='/users/profile/search')
+                input(type='text' name='search' placeholder='Search Profile')
+                button(type='submit' name='submit' value='/users/profile/search') Search
+
+
+        .line
+        .gallery
+          .generate-grid.align-below
+
+            if users 
+              each user,i in users
+                .box.box-detailed
+                  .box-image
+                    a(href=`/users/profile/${user.username}/`)
+                      img(src=`${user.profileimage}` alt=`profile-${user.username}`)
+                  a(href=`/users/profile/${user.username}`) #{user.username}

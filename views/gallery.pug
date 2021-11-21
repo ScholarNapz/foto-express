@@ -1,0 +1,29 @@
+extends layout
+
+block content
+    section.section-gallery
+      .container-large.flex-col
+        .flex-row
+          .gallery-nav
+            if isCollection
+              a(href=`/users/profile/${usr}`)
+                h3 #{title}
+            else
+              h3 #{title}
+            .gap
+            .search-bar
+              form(method='post', action='/gallery/tags')
+                input(type='text' name='search' placeholder='Search Tag')
+                button(type='submit' name='submit' value='/gallery/tags/') Search
+
+
+        .line
+        .gallery
+          .generate-grid.align-below
+
+            if images 
+              each image,i in images
+                .box.box-detailed
+                  .box-image
+                    a(href=`/images/view/${image.name}/`)
+                      img(src=`${image.thumbnail}` alt=`${image.name}`)

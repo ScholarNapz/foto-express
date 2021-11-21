@@ -7,30 +7,33 @@ block content
         .section-profile-image
           .profile-image-container
             img.profile-image(src=`${user.profileimage}` alt='profile image')
-          .upload-image
-            a.btn.btn-medSlate-full(href='#uploadImage') Upload
+        .small-gap
         .section-profile-user
           .profile-username
-            h4 {username}
-          .profile-uploads
-            p Uplaods made: {Total uploads}
+            h4(id='username' name='username') #{user.username}
           .profile-bio
-            p User Bio:
-            .profile-bio-box
-              | {Bio description}
-      //- .line
-      .gallery
-        h3 Galleries
-        .generate-grid.align-below
+            p Bio:
+            
+              
 
-          if colls 
+            form.flex-col( style='flex-grow: 1' method='post', action=`/users/edit/bio/${user.username}/`) 
+              textarea.description-box(disable='' name="bio" id='bio')
+                != user.bio
+            //- .description-box
+            //-       form(method='post', action=`/users/edit/bio/${user.username}`)
+            //-         input#addtag(type='text' name='addtag' placeholder='Add Tag')
+            //-         button(type='submit' name='submit' value='') Add -//
+      .line
+      if colls
+        .gallery
+          h3 Galleries
+          .generate-grid.align-below
             each val, key in colls
               .box.box-detailed
                 .box-image
-                  a(href='#Gallery')
+                  a(href=`/gallery/collection/${user.username}/${key}`)
                     img(src=`${val}` alt='cat')
-                a(href='#Gallery') #{key}
-                p Images: {num}
+                a(href=`/gallery/collection/${user.username}/${key}`) #{key}
 
       .gallery
         h3 All Photos
@@ -38,6 +41,6 @@ block content
           if images
             each image, i in images 
               .box.box-image
-                a(href='#')
-                  img(src=`${image.name}` alt='img')
+                a(href=`/images/view/${image.name}`)
+                  img(src=`${image.thumbnail}` alt=`${image.name}`)
 

@@ -1,0 +1,50 @@
+extends layout
+
+block content
+  section.section-profile
+    .container-large.user-view
+      .user-profile.container-small
+        .section-profile-image
+          .profile-image-container
+            img.profile-image(src=`${user.profileimage}` alt='profile image')
+          form.upload-pic(action='/users/upload', method='post', enctype='multipart/form-data')
+            input#upload-image( class='upload-image' type='file', name='upload-image')
+            input.btn.btn-medSlate-full(type='submit', name='upload', value='Submit')
+        .small-gap
+        .section-profile-user
+          .profile-username
+            h4(id='username' name='username') #{user.username}
+          .profile-bio
+            p Bio:
+            
+              
+
+            form.flex-col( style='flex-grow: 1' method='post', action=`/users/edit/bio/${user.username}/`) 
+              textarea.description-box(name="bio" id='bio')
+                != user.bio
+              button.btn.btn-fir-full(type='submit' name='submit' value='') Save
+            //- .description-box
+            //-       form(method='post', action=`/users/edit/bio/${user.username}`)
+            //-         input#addtag(type='text' name='addtag' placeholder='Add Tag')
+            //-         button(type='submit' name='submit' value='') Add -//
+      .line
+      if colls
+        .gallery
+          h3 Galleries
+          .generate-grid.align-below
+            each val, key in colls
+              .box.box-detailed
+                .box-image
+                  a(href=`/gallery/collection/${user.username}/${key}`)
+                    img(src=`${val}` alt='cat')
+                a(href=`/gallery/collection/${user.username}/${key}`) #{key}
+
+      .gallery
+        h3 All Photos
+        .generate-grid
+          if images
+            each image, i in images 
+              .box.box-image
+                a(href=`/images/view/${image.name}`)
+                  img(src=`${image.thumbnail}` alt=`${image.name}`)
+

@@ -1,16 +1,42 @@
-var express = require('express');
-var router = express.Router();
-
+const express = require('express');
+const router = express.Router();
+const genPassword = require('../lib/passwordUtils').genPassword;
 const { body, validationResult } = require('express-validator');
 const app = require('../app');
-const User = require('../models/user');
-
+const moment = require('moment');
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 
-//? DB
-const mongodb = require('mongodb');
-const db = require('monk')('localhost/fotodb');
+// router.use((req, res, next) => {
+//     console.log(req.session);
+//     console.log(req.user);
+//     next();
+// });
+
+function isAvailable(req, res, next) {
+    req.db.get('users').findOne({ username: req.body.username }).then((user) => {
+        if (user['username'] === req.body.username) {
+            req.flash('failure', 'Username already In Use');
+            res.location('/register')
+            res.redirect('/register')
+        } else {
+            next();
+        }
+
+    });
+};
+
+router.post('/login', [
+        body('username', 'Username is Required').not().isEmpty().trim().escape(),
+        body('password', 'Password is Required').not().isEmpty().trim().escape(),
+    ], passport.authenticate('local', { failureRedirect: '/', failureFlash: 'Invalid Username or Password' }),
+    function(req, res) {
+
+        console.log('login:');
+        console.log(req.body.username);
+
+        res.location('/gallery');
+        res.redirect('/gallery');
+    });
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -25,12 +51,12 @@ router.get('/login', function(req, res, next) {
     res.render('register');
 });
 
-router.post('/register', [
-        body('username', 'Username is Required').not().isEmpty(),
-        body('name', 'Name is Required').not().isEmpty(),
-        body('email', 'Email is Required').not().isEmpty(),
-        body('email', 'Email Formatting Error').isEmail(),
-        body('password', 'Password is Required').not().isEmpty(),
+router.post('/register', isAvailable, [
+        body('username', 'Username is Required').not().isEmpty().trim().escape(),
+        body('name', 'Name is Required').not().isEmpty().trim().escape(),
+        body('email', 'Email is Required').not().isEmpty().trim().escape(),
+        body('email', 'Email Formatting Error').isEmail().trim().escape(),
+        body('password', 'Password is Required').not().isEmpty().trim().escape(),
         body('password2', 'Passwords dont match').custom((value, { req }) => {
             if (value !== req.body.password) {
                 throw new Error('Passwords do not match');
@@ -41,16 +67,20 @@ router.post('/register', [
         }),
     ],
     (req, res, next) => {
-        let username = req.body.username;
-        let name = req.body.name;
-        let email = req.body.email;
-        let password = req.body.password;
-        let password2 = req.body.password2;
-        let profileimage = '/profileimages/avatar.png'
+        const username = req.body.username;
+        const name = req.body.name;
+        const email = req.body.email;
+        const saltHash = genPassword(req.body.password);
+        const salt = saltHash.salt;
+        const hash = saltHash.hash;
+        const profileimage = '/profileimages/avatar.png';
+        const collections = [];
+        const bio = '';
+        const date = moment().toISOString();
 
 
         const errors = validationResult(req);
-        console.log(errors);
+        // console.log(errors);
 
 
         if (!errors.isEmpty()) {
@@ -59,18 +89,19 @@ router.post('/register', [
             });
         } else {
             // If there is no error do this
-            console.log('No Errors...');
-            var newUser = new User({
+
+            const db = require('monk')('localhost/fotodb');
+            const users = db.get('users');
+            users.insert({
                 username: username,
                 name: name,
                 email: email,
-                password: password,
-                profileimage: profileimage
-            });
-
-            User.createUser(newUser, (err, user) => {
-                if (err) throw err;
-                console.log(user);
+                salt: salt,
+                hash: hash,
+                bio: bio,
+                collections: collections,
+                profileimage: profileimage,
+                date: date
             });
 
             req.flash('success', 'Registration successful');
@@ -78,42 +109,6 @@ router.post('/register', [
             res.location('/');
             res.redirect('/');
         }
-    });
-
-passport.serializeUser(function(user, done) {
-    done(null, user.id);
-});
-
-passport.deserializeUser(function(id, done) {
-    User.getUserById(id, function(err, user) {
-        done(err, user);
-    });
-});
-
-passport.use(new LocalStrategy((username, password, done) => {
-    User.getUserByUsername(username, (err, user) => {
-        if (err) throw err;
-        if (!user) {
-            return done(null, false, { message: 'Unknown User' });
-        }
-
-        User.comparePassword(password, user.password, (err, isMatch) => {
-            if (err) return done(err);
-            if (isMatch) {
-                return done(null, user);
-            } else {
-                return done(null, false, { message: 'Invalid Password' });
-            }
-        });
-    });
-}));
-
-router.post('/login', passport.authenticate('local', { failureRedirect: '/', failureFlash: 'Invalid Username or Password' }),
-    function(req, res) {
-
-        req.flash('success', 'Login Successful');
-        //!---------------- res.redirect('/users/' + req.user.username);
-        res.redirect('/users/');
     });
 
 module.exports = router;
