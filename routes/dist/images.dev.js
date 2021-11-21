@@ -14,28 +14,80 @@ var _require = require('express-validator'),
 var moment = require('moment'); //! to get full path of of file- to rip extension
 
 
+require('dotenv').config();
+
 var path = require('path');
 
 var sharp = require('sharp');
 
-var isAuth = require('../lib/authMiddleware').isAuth; // const isOwner = require('../lib/authMiddleware').isOwner;
+var isAuth = require('../lib/authMiddleware').isAuth;
 
+var port = process.env.PORT;
 
-function isOwner(req, res, next) {
+function isOwnerOrAdmin(req, res, next) {
   console.log(req.params.id);
   req.db.get('images').findOne({
     name: req.params.id
   }).then(function (image) {
+    console.log('Check if owner');
+
     if (image['username'] === req.user.username) {
       next();
     } else {
-      res.location('/images/view/' + req.params.id + '/#');
-      res.redirect('/images/view/' + req.params.id + '/#');
+      console.log('Check if Admin');
+      console.log(req.params.id);
+      req.db.get('images').findOne({
+        name: req.params.id
+      }).then(function (image) {
+        try {
+          console.log('inside try');
+          console.log(image);
+          console.log(image['admins']);
+
+          if (image['admins'].length === 0) {
+            console.log('redirect');
+            res.render('viewImage', {
+              title: 'image.name',
+              username: req.user.username,
+              image: image
+            });
+          } else {
+            for (var i = 0; i < image['admins'].length; i++) {
+              var element = image['admins'][i];
+              console.log(element);
+              console.log(req.user.username);
+
+              if (element === req.user.username) {
+                console.log('admin success');
+                next();
+              }
+
+              if (i + 1 >= image['admins'].length) {
+                console.log('Not Admin');
+                res.render('viewImage', {
+                  title: 'image.name',
+                  username: req.user.username,
+                  image: image
+                });
+                next();
+              }
+            }
+          }
+        } catch (error) {
+          console.log('inside catch');
+          res.render('viewImage', {
+            title: 'image.name',
+            username: req.user.username,
+            image: image
+          });
+          next();
+        }
+      }); // res.location('/images/view/' + req.params.id + '/#')
+      // res.redirect('/images/view/' + req.params.id + '/#')
     }
   });
 }
 
-;
 var imageName = null; //! file uploads
 
 var multer = require('multer');
@@ -77,190 +129,270 @@ router.get('/upload', isAuth, function (req, res, next) {
     username: req.user.username
   });
 });
-router.get('/view/:id/', function (req, res, next) {
-  console.log(req.user.username);
+router.get('/view/:id/', isOwnerOrAdmin, function (req, res, next) {
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
   }).then(function (image) {
-    if (image.username === req.user.username) {
-      res.render('editImage', {
-        title: 'Express',
-        username: req.user.username,
-        image: image
-      });
-    } else {
-      res.render('viewImage', {
-        title: 'image.name',
-        username: req.user.username,
-        image: image
-      });
-    }
+    res.render('editImage', {
+      title: 'image.name',
+      username: req.user.username,
+      date: moment(image.date).format('D / M / Y'),
+      image: image
+    });
   });
 });
-router.get('/edit/:id/removetag/:tag', isOwner, function (req, res, next) {
+router.get('/download/:id/', function (req, res, next) {
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
   }).then(function (image) {
-    if (image.username === req.user.username) {
-      images.update({
-        name: req.params.id
-      }, {
-        $pull: {
-          'tags': req.params.tag
-        }
-      });
+    console.log(image);
+    var imagePath = 'static' + image.location;
+    console.log('...');
+    console.log(imagePath);
+    res.download(imagePath), function () {
+      console.log('...download'); // res.location('/images/view/' + req.params.id + '/#addtag');
+      // res.redirect('/images/view/' + req.params.id + '/#addtag');
+    }; // ,function(error) {
+    //         console.log("Error : ", error)
+    //     });
+  });
+});
+router.get('/edit/:id/removetag/:tag/', isOwnerOrAdmin, function (req, res, next) {
+  var images = req.db.get('images');
+  images.update({
+    name: req.params.id
+  }, {
+    $pull: {
+      'tags': req.params.tag
     }
-
+  }).then(function () {
     res.location('/images/view/' + req.params.id + '/#addtag');
     res.redirect('/images/view/' + req.params.id + '/#addtag');
   });
 });
-router.get('/edit/:id/removecollection/:collection', isOwner, function (req, res, next) {
+router.get('/edit/:id/removecollection/:collection', isOwnerOrAdmin, function (req, res, next) {
   var images = req.db.get('images');
-  images.findOne({
+  console.log('About to remove collection');
+  console.log(req.params.id);
+  console.log(req.params.collection);
+  images.update({
     name: req.params.id
-  }).then(function (image) {
-    if (image.username === req.user.username) {
-      images.update({
-        name: req.params.id
-      }, {
-        $pull: {
-          'collections': req.params.collection
-        }
-      });
+  }, {
+    $pull: {
+      'collections': req.params.collection
     }
-
+  }).then(function () {
     res.location('/images/view/' + req.params.id + '/#addcollection');
     res.redirect('/images/view/' + req.params.id + '/#addcollection');
   });
 });
-router.post('/edit/:id/addtag/', isOwner, [body('addtag', 'empty').trim().escape(), body('addtag', 'empty').not().isEmpty()], function (req, res, next) {
+router.get('/edit/:id/removeadmin/:admin/', isOwnerOrAdmin, function (req, res, next) {
+  var images = req.db.get('images');
+  console.log('About to remove admin');
+  console.log(req.params.id);
+  console.log(req.params.admin);
+  images.update({
+    name: req.params.id
+  }, {
+    $pull: {
+      'admins': req.params.admin
+    }
+  }).then(function () {
+    res.location('/images/view/' + req.params.id + '/#addadmin');
+    res.redirect('/images/view/' + req.params.id + '/#addadmin');
+  });
+});
+router.get('/edit/:id/removeshared/:shared/', isOwnerOrAdmin, function (req, res, next) {
+  var images = req.db.get('images');
+  console.log('About to remove shared');
+  console.log(req.params.id);
+  console.log(req.params.shared);
+  images.update({
+    name: req.params.id
+  }, {
+    $pull: {
+      shared: req.params.shared
+    }
+  }).then(function (i) {
+    console.log(i);
+    res.location('/images/view/' + req.params.id + '/#addshared');
+    res.redirect('/images/view/' + req.params.id + '/#addshared');
+  });
+});
+router.post('/edit/:id/addtag/', isOwnerOrAdmin, [body('addtag', 'empty').trim().escape(), body('addtag', 'empty').not().isEmpty()], function (req, res, next) {
   // 
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
   }).then(function (image) {
-    if (image.username === req.user.username) {
-      if (validationResult(req).isEmpty() && req.body.addtag.trim() !== '' && req.body.addtag.trim() !== '.' && req.body.addtag.trim() !== '?') {
-        images.find({
-          name: req.params.id,
-          tags: {
-            $in: [req.body.addtag]
-          }
-        }).then(function (tag) {
-          if (tag.length === 0) {
-            images.update({
-              name: req.params.id
-            }, {
-              $push: {
-                tags: req.body.addtag
-              }
-            }).then(function (image) {
-              res.location('/images/view/' + req.params.id + '/#addtag');
-              res.redirect('/images/view/' + req.params.id + '/#addtag');
-            });
-          } else {
+    if (validationResult(req).isEmpty() && req.body.addtag.trim() !== '' && req.body.addtag.trim() !== '.' && req.body.addtag.trim() !== '?') {
+      images.find({
+        name: req.params.id,
+        tags: {
+          $in: [req.body.addtag]
+        }
+      }).then(function (tag) {
+        if (tag.length === 0) {
+          images.update({
+            name: req.params.id
+          }, {
+            $push: {
+              tags: req.body.addtag
+            }
+          }).then(function (image) {
             res.location('/images/view/' + req.params.id + '/#addtag');
             res.redirect('/images/view/' + req.params.id + '/#addtag');
-          }
-        });
-      } else {
-        res.location('/images/view/' + req.params.id + '/#addtag');
-        res.redirect('/images/view/' + req.params.id + '/#addtag');
-      }
-
-      ;
+          });
+        } else {
+          res.location('/images/view/' + req.params.id + '/#addtag');
+          res.redirect('/images/view/' + req.params.id + '/#addtag');
+        }
+      });
     } else {
       res.location('/images/view/' + req.params.id + '/#addtag');
       res.redirect('/images/view/' + req.params.id + '/#addtag');
     }
+
+    ;
   });
 });
-router.post('/edit/:id/addcollection/', isOwner, [body('addcollection', 'empty').trim().escape(), body('addcollection', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/addcollection', isOwnerOrAdmin, [body('addcollection', 'empty').trim().escape(), body('addcollection', 'empty').not().isEmpty()], function (req, res, next) {
+  console.log('In add collection function');
   var images = req.db.get('images');
   var user = req.db.get('users');
   images.findOne({
     name: req.params.id
   }).then(function (image) {
-    console.log('_-_-_-_-__');
-    console.log(image);
-    console.log(image.username + ' ' + req.user.username);
+    if (validationResult(req).isEmpty() && req.body.addcollection.trim() !== '' && req.body.addcollection.trim() !== '.' && req.body.addcollection.trim() !== '?') {
+      images.find({
+        name: req.params.id,
+        collections: {
+          $in: [req.body.addcollection]
+        }
+      }).then(function (col) {
+        console.log('image found');
+        console.log(col);
 
-    if (image.username === req.user.username) {
-      if (validationResult(req).isEmpty() && req.body.addcollection.trim() !== '' && req.body.addcollection.trim() !== '.' && req.body.addcollection.trim() !== '?') {
-        images.find({
-          name: req.params.id,
-          collections: {
-            $in: [req.body.addcollection]
-          }
-        }).then(function (col) {
-          console.log('NOOO');
-          console.log(col);
-          console.log('N111'); // console.log(col.collections);
-
-          console.log('qwe');
-
-          if (col.length === 0) {
-            // if (col.include(req.body.addcollection)) {
-            user.update({
-              username: req.user.username
+        if (col.length === 0 || null) {
+          // if (col.include(req.body.addcollection)) {
+          user.update({
+            username: req.user.username
+          }, {
+            $push: {
+              collections: req.body.addcollection
+            }
+          }).then(function () {
+            images.update({
+              name: req.params.id
             }, {
               $push: {
                 collections: req.body.addcollection
               }
-            }).then(function () {
-              images.update({
-                name: req.params.id
-              }, {
-                $push: {
-                  collections: req.body.addcollection
-                }
-              }).then(function (image) {
-                res.location('/images/view/' + req.params.id + '/#addcollection');
-                res.redirect('/images/view/' + req.params.id + '/#addcollection');
-              });
+            }).then(function (image) {
+              res.location('/images/view/' + req.params.id + '/#addcollection');
+              res.redirect('/images/view/' + req.params.id + '/#addcollection');
             });
-          } else {
-            res.location('/images/view/' + req.params.id + '/#addcollection');
-            res.redirect('/images/view/' + req.params.id + '/#addcollection');
-          }
-        });
-      } else {
-        res.location('/images/view/' + req.params.id + '/#addcollection');
-        res.redirect('/images/view/' + req.params.id + '/#addcollection');
-      }
-
-      ;
+          });
+        } else {
+          res.location('/images/view/' + req.params.id + '/#addcollection');
+          res.redirect('/images/view/' + req.params.id + '/#addcollection');
+        }
+      });
     } else {
       res.location('/images/view/' + req.params.id + '/#addcollection');
       res.redirect('/images/view/' + req.params.id + '/#addcollection');
     }
+
+    ;
   });
 });
-router.post('/edit/:id/description/', isOwner, [body('description', 'empty').trim().escape(), body('description', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/addadmin/', isOwnerOrAdmin, [body('addadmin', 'empty').trim().escape(), body('addadmin', 'empty').not().isEmpty()], function (req, res, next) {
+  console.log('addadmin started');
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
   }).then(function (image) {
-    if (image.username === req.user.username) {
-      console.log('123456');
-      console.log(req.body.description);
-      images.update({
-        name: req.params.id
-      }, {
-        $set: {
-          description: req.body.description
+    if (validationResult(req).isEmpty() && req.body.addadmin.trim() !== '' && req.body.addadmin.trim() !== '.' && req.body.addadmin.trim() !== '?') {
+      images.find({
+        name: req.params.id,
+        admins: {
+          $in: [req.body.addadmin]
         }
-      }).then(function (image) {
-        res.location('/images/view/' + req.params.id + '/#description');
-        res.redirect('/images/view/' + req.params.id + '/#description');
+      }).then(function (admin) {
+        if (admin.length === 0) {
+          images.update({
+            name: req.params.id
+          }, {
+            $push: {
+              admins: req.body.addadmin
+            }
+          }).then(function (admin) {
+            res.location('/images/view/' + req.params.id + '/#addadmin');
+            res.redirect('/images/view/' + req.params.id + '/#addadmin');
+          });
+        } else {
+          res.location('/images/view/' + req.params.id + '/#addadmin');
+          res.redirect('/images/view/' + req.params.id + '/##addadmin');
+        }
       });
     } else {
-      res.location('/images/view/' + req.params.id + '/#description');
-      res.redirect('/images/view/' + req.params.id + '/#description');
+      res.location('/images/view/' + req.params.id + '/#addadmin');
+      res.redirect('/images/view/' + req.params.id + '/#addadmin');
     }
+
+    ;
+  });
+});
+router.post('/edit/:id/addshared/', isOwnerOrAdmin, [body('addshared', 'empty').trim().escape(), body('addshared', 'empty').not().isEmpty()], function (req, res, next) {
+  console.log('addshared started');
+  var images = req.db.get('images');
+  images.findOne({
+    name: req.params.id
+  }).then(function (image) {
+    if (validationResult(req).isEmpty() && req.body.addshared.trim() !== '' && req.body.addshared.trim() !== '.' && req.body.addshared.trim() !== '?') {
+      images.find({
+        name: req.params.id,
+        shared: {
+          $in: [req.body.addshared]
+        }
+      }).then(function (shared) {
+        if (shared.length === 0) {
+          images.update({
+            name: req.params.id
+          }, {
+            $push: {
+              shared: req.body.addshared
+            }
+          }).then(function (shared) {
+            res.location('/images/view/' + req.params.id + '/#addshared');
+            res.redirect('/images/view/' + req.params.id + '/#addshared');
+          });
+        } else {
+          res.location('/images/view/' + req.params.id + '/#addshared');
+          res.redirect('/images/view/' + req.params.id + '/##addshared');
+        }
+      });
+    } else {
+      res.location('/images/view/' + req.params.id + '/#addshared');
+      res.redirect('/images/view/' + req.params.id + '/#addshared');
+    }
+
+    ;
+  });
+});
+router.post('/edit/:id/description/', isOwnerOrAdmin, [body('description', 'empty').trim().escape(), body('description', 'empty').not().isEmpty()], function (req, res, next) {
+  var images = req.db.get('images');
+  images.update({
+    name: req.params.id
+  }, {
+    $set: {
+      description: req.body.description
+    }
+  }).then(function (image) {
+    res.location('/images/view/' + req.params.id + '/#description');
+    res.redirect('/images/view/' + req.params.id + '/#description');
   });
 });
 router.post('/upload', isAuth, upload.single('upload-image'), function (req, res, next) {
@@ -291,6 +423,8 @@ router.post('/upload', isAuth, upload.single('upload-image'), function (req, res
     var description = '';
     var collections = [];
     var tags = [];
+    var admins = [];
+    var shared = [];
     var date = moment().toISOString();
     images.insert({
       name: name[0],
@@ -300,6 +434,8 @@ router.post('/upload', isAuth, upload.single('upload-image'), function (req, res
       description: description,
       collections: collections,
       tags: tags,
+      admins: admins,
+      shared: shared,
       date: date
     });
     res.location('/images/view/' + name[0] + '/');
@@ -309,7 +445,9 @@ router.post('/upload', isAuth, upload.single('upload-image'), function (req, res
     res.redirect('/gallery/');
   }
 });
-router.post('/remove/:id/', isAuth, isOwner, function (req, res) {
+router.post('/remove/:id/', isAuth,
+/*isOwner,*/
+function (req, res) {
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
