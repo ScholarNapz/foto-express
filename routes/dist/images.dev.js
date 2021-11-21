@@ -18,6 +18,24 @@ var path = require('path');
 
 var sharp = require('sharp');
 
+var isAuth = require('../lib/authMiddleware').isAuth; // const isOwner = require('../lib/authMiddleware').isOwner;
+
+
+function isOwner(req, res, next) {
+  console.log(req.params.id);
+  req.db.get('images').findOne({
+    name: req.params.id
+  }).then(function (image) {
+    if (image['username'] === req.user.username) {
+      next();
+    } else {
+      res.location('/images/view/' + req.params.id + '/#');
+      res.redirect('/images/view/' + req.params.id + '/#');
+    }
+  });
+}
+
+;
 var imageName = null; //! file uploads
 
 var multer = require('multer');
@@ -53,13 +71,14 @@ var upload = multer({
 });
 /* GET home page. */
 
-router.get('/upload', function (req, res, next) {
+router.get('/upload', isAuth, function (req, res, next) {
   res.render('upload', {
     title: 'Uplaod',
     username: req.user.username
   });
 });
 router.get('/view/:id/', function (req, res, next) {
+  console.log(req.user.username);
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
@@ -67,6 +86,7 @@ router.get('/view/:id/', function (req, res, next) {
     if (image.username === req.user.username) {
       res.render('editImage', {
         title: 'Express',
+        username: req.user.username,
         image: image
       });
     } else {
@@ -78,7 +98,7 @@ router.get('/view/:id/', function (req, res, next) {
     }
   });
 });
-router.get('/edit/:id/removetag/:tag', function (req, res, next) {
+router.get('/edit/:id/removetag/:tag', isOwner, function (req, res, next) {
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
@@ -97,7 +117,7 @@ router.get('/edit/:id/removetag/:tag', function (req, res, next) {
     res.redirect('/images/view/' + req.params.id + '/#addtag');
   });
 });
-router.get('/edit/:id/removecollection/:collection', function (req, res, next) {
+router.get('/edit/:id/removecollection/:collection', isOwner, function (req, res, next) {
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
@@ -116,7 +136,7 @@ router.get('/edit/:id/removecollection/:collection', function (req, res, next) {
     res.redirect('/images/view/' + req.params.id + '/#addcollection');
   });
 });
-router.post('/edit/:id/addtag/', [body('addtag', 'empty').trim().escape(), body('addtag', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/addtag/', isOwner, [body('addtag', 'empty').trim().escape(), body('addtag', 'empty').not().isEmpty()], function (req, res, next) {
   // 
   var images = req.db.get('images');
   images.findOne({
@@ -158,7 +178,7 @@ router.post('/edit/:id/addtag/', [body('addtag', 'empty').trim().escape(), body(
     }
   });
 });
-router.post('/edit/:id/addcollection/', [body('addcollection', 'empty').trim().escape(), body('addcollection', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/addcollection/', isOwner, [body('addcollection', 'empty').trim().escape(), body('addcollection', 'empty').not().isEmpty()], function (req, res, next) {
   var images = req.db.get('images');
   var user = req.db.get('users');
   images.findOne({
@@ -219,7 +239,7 @@ router.post('/edit/:id/addcollection/', [body('addcollection', 'empty').trim().e
     }
   });
 });
-router.post('/edit/:id/description/', [body('description', 'empty').trim().escape(), body('description', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/description/', isOwner, [body('description', 'empty').trim().escape(), body('description', 'empty').not().isEmpty()], function (req, res, next) {
   var images = req.db.get('images');
   images.findOne({
     name: req.params.id
@@ -243,7 +263,7 @@ router.post('/edit/:id/description/', [body('description', 'empty').trim().escap
     }
   });
 });
-router.post('/upload', upload.single('upload-image'), function (req, res, next) {
+router.post('/upload', isAuth, upload.single('upload-image'), function (req, res, next) {
   var dirName = (__dirname + '').split('/');
 
   dirName.pop();
@@ -262,12 +282,8 @@ router.post('/upload', upload.single('upload-image'), function (req, res, next) 
 
 
   var images = req.db.get('images');
-  console.log('123456789');
-  console.log(imageName);
   var name = imageName.split('.');
-  console.log(name);
   name.pop();
-  console.log(name);
   var imageLoc = '/uploads/' + imageName;
   var thumbnailLoc = '/thumbnails/' + imageName;
   var username = req.user.username;
@@ -285,7 +301,39 @@ router.post('/upload', upload.single('upload-image'), function (req, res, next) 
     tags: tags,
     date: date
   });
-  res.location('/gallery');
-  res.redirect('/gallery');
+  res.location('/images/view/' + name[0] + '/');
+  res.redirect('/images/view/' + name[0] + '/');
+});
+router.post('/remove/:id/', isAuth, isOwner, function (req, res) {
+  var images = req.db.get('images');
+  images.findOne({
+    name: req.params.id
+  }).then(function (image) {
+    if (image['username'] + req.user.username) {
+      images.remove({
+        name: req.params.id
+      }).then(function () {
+        var dirName = (__dirname + '').split('/');
+
+        dirName.pop();
+        var staticPath = '';
+        dirName.forEach(function (folder) {
+          staticPath += folder + '/';
+        });
+        staticPath += 'static'; // image['thumbnail']
+        // image['location']
+
+        try {
+          fs.unlinkSync(pathToRemovedPic + image['thumbnail']);
+          fs.unlinkSync(pathToRemovedPic + image['location']);
+        } catch (error) {
+          console.log("Delete error: ".concat(error));
+        }
+
+        res.location('/users/myprofile');
+        res.redirect('/users/myprofile');
+      });
+    }
+  });
 });
 module.exports = router;

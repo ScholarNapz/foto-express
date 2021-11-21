@@ -12,6 +12,19 @@ const passport = require('passport');
 //     next();
 // });
 
+function isAvailable(req, res, next) {
+    req.db.get('users').findOne({ username: req.body.username }).then((user) => {
+        if (user['username'] === req.body.username) {
+            req.flash('failure', 'Username already In Use');
+            res.location('/register')
+            res.redirect('/register')
+        } else {
+            next();
+        }
+
+    });
+};
+
 router.post('/login', [
         body('username', 'Username is Required').not().isEmpty().trim().escape(),
         body('password', 'Password is Required').not().isEmpty().trim().escape(),
@@ -38,7 +51,7 @@ router.get('/login', function(req, res, next) {
     res.render('register');
 });
 
-router.post('/register', [
+router.post('/register', isAvailable, [
         body('username', 'Username is Required').not().isEmpty().trim().escape(),
         body('name', 'Name is Required').not().isEmpty().trim().escape(),
         body('email', 'Email is Required').not().isEmpty().trim().escape(),
@@ -97,35 +110,5 @@ router.post('/register', [
             res.redirect('/');
         }
     });
-
-// passport.serializeUser(function(user, done) {
-//     done(null, user.id);
-// });
-
-// passport.deserializeUser(function(id, done) {
-//     User.getUserById(id, function(err, user) {
-//         done(err, user);
-//     });
-// });
-
-// passport.use(new LocalStrategy((username, password, done) => {
-//     User.getUserByUsername(username, (err, user) => {
-//         if (err) throw err;
-//         if (!user) {
-//             return done(null, false, { message: 'Unknown User' });
-//         }
-
-//         User.comparePassword(password, user.password, (err, isMatch) => {
-//             if (err) return done(err);
-//             if (isMatch) {
-//                 return done(null, user);
-//             } else {
-//                 return done(null, false, { message: 'Invalid Password' });
-//             }
-//         });
-//     });
-// }));
-
-
 
 module.exports = router;

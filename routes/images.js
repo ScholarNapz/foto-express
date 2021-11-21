@@ -9,6 +9,22 @@ const path = require('path');
 
 const sharp = require('sharp');
 
+const isAuth = require('../lib/authMiddleware').isAuth;
+// const isOwner = require('../lib/authMiddleware').isOwner;
+
+
+function isOwner(req, res, next) {
+    console.log(req.params.id);
+    req.db.get('images').findOne({ name: req.params.id }).then((image) => {
+        if (image['username'] === req.user.username) {
+            next();
+        } else {
+            res.location('/images/view/' + req.params.id + '/#')
+            res.redirect('/images/view/' + req.params.id + '/#')
+        }
+
+    });
+};
 
 let imageName = null
 
@@ -49,17 +65,18 @@ const upload = multer({
 
 /* GET home page. */
 
-router.get('/upload', function(req, res, next) {
+router.get('/upload', isAuth, function(req, res, next) {
     res.render('upload', { title: 'Uplaod', username: req.user.username });
 });
 
 router.get('/view/:id/', function(req, res, next) {
 
+    console.log(req.user.username);
     const images = req.db.get('images');
 
     images.findOne({ name: req.params.id }).then((image) => {
         if (image.username === req.user.username) {
-            res.render('editImage', { title: 'Express', image: image });
+            res.render('editImage', { title: 'Express', username: req.user.username, image: image });
         } else {
             res.render('viewImage', { title: 'image.name', username: req.user.username, image: image });
         }
@@ -69,7 +86,7 @@ router.get('/view/:id/', function(req, res, next) {
 });
 
 
-router.get('/edit/:id/removetag/:tag', function(req, res, next) {
+router.get('/edit/:id/removetag/:tag', isOwner, function(req, res, next) {
 
 
     const images = req.db.get('images');
@@ -82,7 +99,7 @@ router.get('/edit/:id/removetag/:tag', function(req, res, next) {
     });
 });
 
-router.get('/edit/:id/removecollection/:collection', (req, res, next) => {
+router.get('/edit/:id/removecollection/:collection', isOwner, (req, res, next) => {
 
     const images = req.db.get('images');
     images.findOne({ name: req.params.id }).then((image) => {
@@ -94,7 +111,7 @@ router.get('/edit/:id/removecollection/:collection', (req, res, next) => {
     });
 });
 
-router.post('/edit/:id/addtag/', [
+router.post('/edit/:id/addtag/', isOwner, [
     body('addtag', 'empty').trim().escape(),
     body('addtag', 'empty').not().isEmpty(),
 ], function(req, res, next) {
@@ -132,7 +149,7 @@ router.post('/edit/:id/addtag/', [
     });
 });
 
-router.post('/edit/:id/addcollection/', [
+router.post('/edit/:id/addcollection/', isOwner, [
     body('addcollection', 'empty').trim().escape(),
     body('addcollection', 'empty').not().isEmpty(),
 ], function(req, res, next) {
@@ -181,7 +198,7 @@ router.post('/edit/:id/addcollection/', [
     });
 });
 
-router.post('/edit/:id/description/', [
+router.post('/edit/:id/description/', isOwner, [
     body('description', 'empty').trim().escape(),
     body('description', 'empty').not().isEmpty(),
 ], function(req, res, next) {
@@ -204,7 +221,7 @@ router.post('/edit/:id/description/', [
 
 
 
-router.post('/upload', upload.single('upload-image'), (req, res, next) => {
+router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) => {
     let dirName = (__dirname + '').split('/');
     dirName.pop();
     let staticPath = '';
@@ -230,12 +247,8 @@ router.post('/upload', upload.single('upload-image'), (req, res, next) => {
     //
     const images = req.db.get('images');
 
-    console.log('123456789');
-    console.log(imageName);
     let name = imageName.split('.');
-    console.log(name);
     name.pop();
-    console.log(name);
     const imageLoc = '/uploads/' + imageName;
     const thumbnailLoc = '/thumbnails/' + imageName;
     const username = req.user.username;
@@ -255,8 +268,39 @@ router.post('/upload', upload.single('upload-image'), (req, res, next) => {
         date: date
     });
 
-    res.location('/gallery');
-    res.redirect('/gallery');
+    res.location('/images/view/' + name[0] + '/');
+    res.redirect('/images/view/' + name[0] + '/');
+});
+
+router.post('/remove/:id/', isAuth, isOwner, (req, res) => {
+
+    const images = req.db.get('images');
+    images.findOne({ name: req.params.id }).then((image) => {
+        if (image['username'] + req.user.username) {
+            images.remove({ name: req.params.id }).then(() => {
+                let dirName = (__dirname + '').split('/');
+                dirName.pop();
+                let staticPath = '';
+                dirName.forEach(folder => {
+                    staticPath += folder + '/';
+                });
+                staticPath += 'static'
+                    // image['thumbnail']
+                    // image['location']
+
+                try {
+                    fs.unlinkSync(pathToRemovedPic + image['thumbnail'])
+                    fs.unlinkSync(pathToRemovedPic + image['location'])
+                } catch (error) {
+                    console.log(`Delete error: ${error}`);
+                }
+
+                res.location('/users/myprofile');
+                res.redirect('/users/myprofile');
+            })
+        }
+
+    })
 });
 
 

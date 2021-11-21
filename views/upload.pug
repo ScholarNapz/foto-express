@@ -3,9 +3,11 @@ extends layout
 block content
   section.section-upload.container-small.pad-hor
     h3 Upload Image
+    .coll-gap
     form.flex-col(action='/images/upload', method='post', enctype='multipart/form-data')
       .details-container
         input#upload-image( class='upload-image' type='file', name='upload-image')
-      //- .image-display
-      //-   img(src='300x300.png', alt='Image preview')
       input.btn.btn-medSlate-full(type='submit', name='upload', value='Submit ')
+
+
+

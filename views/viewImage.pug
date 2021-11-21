@@ -7,19 +7,19 @@ block content
     .image-display
       img(src=`${image.location}` alt=`${image.name}`)
     .details-container.flex-col
-      h4 Description
+      h5 Description
       textarea#description.description-box(disabled='' name="description", cols="30") 
         != image.description
         
       if image.tags
         .flex-col
-          h4 Tags
+          h5 Tags
             .tags-container
               each tag, i in image.tags
                 a.btn.btn-margin.btn-medSlate-full(href=`/gallery/tags/${tag}`) #{tag}
       if image.collections
         .flex-col
-          h4 Collections
+          h5 Collections
           .tags-container
             each collection, i in image.collections
               a.btn.btn-margin.btn-rustic-full(href=`/gallery/collection/${image.username}/${collection}`) #{collection}

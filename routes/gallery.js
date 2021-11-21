@@ -4,6 +4,7 @@ const passport = require('passport');
 
 const isAuth = require('../lib/authMiddleware').isAuth;
 
+
 /* GET home page. */
 router.get('/', isAuth, function(req, res, next) {
     const images = req.db.get('images')

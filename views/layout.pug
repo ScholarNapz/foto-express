@@ -5,10 +5,11 @@ html
     meta(name='viewport' content='width=device-width, initial-scale=1.0')
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel="stylesheet", href="/stylesheets/queries.css")
   body
   nav
     .nav-logo
-      a(href='/gallery')
+      a.logo-text(href='/gallery')
         | foto
         strong.logo-strong .
     .nav-control
@@ -19,7 +20,7 @@ html
       .gap
       .nav-quit
         a(href='/users/logout') Logout
-  //- .login-head
-  //-   h4 Logged in: &nbsp
-  //-   h4(name=`${username}` id=`${username}`) #{username}
+  //- .login-head(style='padding: 20px 20px 0 20px')
+  //-   h4(style="font-size:15px;") Logged in: &nbsp
+  //-   h4(name=`${username}` id=`${username}` style=`font-size:15px; `) #{username}
   block content
