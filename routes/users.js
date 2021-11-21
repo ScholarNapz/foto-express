@@ -120,7 +120,7 @@ users.update({ username: req.user.username }, { $set: { profileimage: staticFile
 res.location('/users/myprofile/');
 res.redirect('/users/myprofile/');
 });
-
+*/
 router.post('/edit/bio/:id/', isAuth, (req, res) => {
     const user = db.get('users');
     user.update({ username: req.user.username }, { $set: { bio: req.body.bio } })
@@ -134,7 +134,7 @@ router.get('/', isAuth, (req, res) => {
         res.render('users', { title: 'Users', username: req.user.username, users: usr });
     });
 });
-*/
+
 /* GET users listing. */
 router.get('/profile/:id/', isAuth, (req, res) => {
     const users = db.get('users')

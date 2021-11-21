@@ -122,22 +122,36 @@ users.update({ username: req.user.username }, { $set: { profileimage: staticFile
 res.location('/users/myprofile/');
 res.redirect('/users/myprofile/');
 });
-
-router.post('/edit/bio/:id/', isAuth, (req, res) => {
-    const user = db.get('users');
-    user.update({ username: req.user.username }, { $set: { bio: req.body.bio } })
-    res.location('/users/profile/' + req.params.id);
-    res.redirect('/users/profile/' + req.params.id);
-});
-
-router.get('/', isAuth, (req, res) => {
-    const users = db.get('users');
-    users.find({ $nor: [{ $and: [{ 'username': req.user.username }] }] }).then(usr => {
-        res.render('users', { title: 'Users', username: req.user.username, users: usr });
-    });
-});
 */
 
+router.post('/edit/bio/:id/', isAuth, function (req, res) {
+  var user = db.get('users');
+  user.update({
+    username: req.user.username
+  }, {
+    $set: {
+      bio: req.body.bio
+    }
+  });
+  res.location('/users/profile/' + req.params.id);
+  res.redirect('/users/profile/' + req.params.id);
+});
+router.get('/', isAuth, function (req, res) {
+  var users = db.get('users');
+  users.find({
+    $nor: [{
+      $and: [{
+        'username': req.user.username
+      }]
+    }]
+  }).then(function (usr) {
+    res.render('users', {
+      title: 'Users',
+      username: req.user.username,
+      users: usr
+    });
+  });
+});
 /* GET users listing. */
 
 router.get('/profile/:id/', isAuth, function (req, res) {

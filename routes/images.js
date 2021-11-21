@@ -295,8 +295,8 @@ router.post('/remove/:id/', isAuth, isOwner, (req, res) => {
                     // image['location']
 
                 try {
-                    fs.unlinkSync(pathToRemovedPic + image['thumbnail'])
-                    fs.unlinkSync(pathToRemovedPic + image['location'])
+                    fs.unlinkSync(staticPath + image['thumbnail'])
+                    fs.unlinkSync(staticPath + image['location'])
                 } catch (error) {
                     console.log(`Delete error: ${error}`);
                 }
