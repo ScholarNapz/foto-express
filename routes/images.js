@@ -47,7 +47,8 @@ const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/pjpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/bmp' || file.mimetype === 'image/gif') {
         cb(null, true);
     } else {
-        cb(new Error('File is not in image format.'), false);
+        cb(null, false);
+        // cb(new Error('File is not in image format.'), false);
     }
 };
 
@@ -222,54 +223,59 @@ router.post('/edit/:id/description/', isOwner, [
 
 
 router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) => {
-    let dirName = (__dirname + '').split('/');
-    dirName.pop();
-    let staticPath = '';
-    dirName.forEach(folder => {
-        staticPath += folder + '/';
-    });
+    if (imageName != null) {
+        let dirName = (__dirname + '').split('/');
+        dirName.pop();
+        let staticPath = '';
+        dirName.forEach(folder => {
+            staticPath += folder + '/';
+        });
 
 
-    //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
-    if (imageName.split('.').pop() !== '.gif') {
-        fs.copyFile(staticPath + 'static/uploads/' + imageName,
-            staticPath + 'static/thumbnails/' + imageName, (err) => {
-                if (err) throw err;
-            });
+        //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
+        if (imageName.split('.').pop() !== '.gif') {
+            fs.copyFile(staticPath + 'static/uploads/' + imageName,
+                staticPath + 'static/thumbnails/' + imageName, (err) => {
+                    console.log('Uplaod Error');
+                });
+        } else {
+            sharp(staticPath + 'static/uploads/' + imageName)
+                .resize(300, 300)
+                .toFile(staticPath + 'static/thumbnails/' + imageName, (err, info) => {
+
+                });
+        }
+
+        //
+        const images = req.db.get('images');
+
+        let name = imageName.split('.');
+        name.pop();
+        const imageLoc = '/uploads/' + imageName;
+        const thumbnailLoc = '/thumbnails/' + imageName;
+        const username = req.user.username;
+        const description = '';
+        const collections = [];
+        const tags = [];
+        const date = moment().toISOString();
+
+        images.insert({
+            name: name[0],
+            location: imageLoc,
+            thumbnail: thumbnailLoc,
+            username: username,
+            description: description,
+            collections: collections,
+            tags: tags,
+            date: date
+        });
+
+        res.location('/images/view/' + name[0] + '/');
+        res.redirect('/images/view/' + name[0] + '/');
     } else {
-        sharp(staticPath + 'static/uploads/' + imageName)
-            .resize(300, 300)
-            .toFile(staticPath + 'static/thumbnails/' + imageName, (err, info) => {
-
-            });
+        res.location('/gallery/');
+        res.redirect('/gallery/');
     }
-
-    //
-    const images = req.db.get('images');
-
-    let name = imageName.split('.');
-    name.pop();
-    const imageLoc = '/uploads/' + imageName;
-    const thumbnailLoc = '/thumbnails/' + imageName;
-    const username = req.user.username;
-    const description = '';
-    const collections = [];
-    const tags = [];
-    const date = moment().toISOString();
-
-    images.insert({
-        name: name[0],
-        location: imageLoc,
-        thumbnail: thumbnailLoc,
-        username: username,
-        description: description,
-        collections: collections,
-        tags: tags,
-        date: date
-    });
-
-    res.location('/images/view/' + name[0] + '/');
-    res.redirect('/images/view/' + name[0] + '/');
 });
 
 router.post('/remove/:id/', isAuth, isOwner, (req, res) => {

@@ -3,7 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const isAuth = require('../lib/authMiddleware').isAuth;
 const fs = require('fs');
-
+const sharp = require('sharp');
 const { exec } = require("child_process");
 //? DB
 const db = require('monk')('localhost/fotodb');
@@ -30,7 +30,6 @@ const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/pjpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/bmp') {
         cb(null, true);
     } else {
-
         cb(null, false);
     }
 };
@@ -50,7 +49,8 @@ const upload = multer({
 
 
 router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) => {
-    if (imageName !== null) {
+
+    if (imageName != null) {
         const users = db.get('users');
         let dirName = (__dirname + '').split('/');
         dirName.pop();
@@ -58,34 +58,67 @@ router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) =
         dirName.forEach(folder => {
             staticPath += folder + '/';
         });
+        console.log(imageName);
+        //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
+        // if (imageName.split('.').pop() !== '.gif') {
+        //     fs.copyFile(staticPath + 'static/.temp/' + imageName,
+        //         staticPath + 'static/profileimages/' + imageName, (err) => {
+        //             if (err) throw err;
+        //         });
+        // } else {
+        sharp(staticPath + 'static/.temp/' + imageName)
+            .resize(300, 300)
+            .toFile(staticPath + 'static/profileimages/' + imageName, (err, info) => {
+                console.log('converted');
 
-        let tempFilePath = staticPath + 'static/.temp/' + imageName;
-        let saveFilePath = staticPath + 'static/profileimages/' + imageName;
-        let staticFilePath = '/profileimages/' + imageName;
+            });
+        // }
 
-        let execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300"
-
-        exec(execLine, (error, stdout, stderr) => {
-            if (error) {
-                res.location('/users/myprofile/');
-                res.redirect('/users/myprofile/');
-                return;
-            }
-
-            let pathToTempPic = staticPath + 'static/.temp/' + imageName;
-            // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
-            try {
-                fs.unlinkSync(pathToTempPic)
-            } catch (error) {
-                console.log(`Delete error: ${error}`);
-            }
+        users.update({ username: req.user.username }, { $set: { profileimage: '/profileimages/' + imageName } }).then(() => {
+            console.log('profile image update');
+            res.location('/users/myprofile/');
+            res.redirect('/users/myprofile/');
         });
+    } else {
 
-        users.update({ username: req.user.username }, { $set: { profileimage: staticFilePath } });
+        res.location('/users/myprofile/');
+        res.redirect('/users/myprofile/');
     }
 
-    res.location('/users/myprofile/');
-    res.redirect('/users/myprofile/');
+});
+
+
+
+/*
+let tempFilePath = staticPath + 'static/.temp/' + imageName;
+let saveFilePath = staticPath + 'static/profileimages/' + imageName;
+let staticFilePath = '/profileimages/' + imageName;
+
+let execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300"
+
+exec(execLine, (error, stdout, stderr) => {
+    if (error) {
+        res.location('/users/myprofile/');
+        res.redirect('/users/myprofile/');
+        return;
+    }
+
+    let pathToTempPic = staticPath + 'static/.temp/' + imageName;
+    // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
+    try {
+        fs.unlinkSync(pathToTempPic)
+    } catch (error) {
+        console.log(`Delete error: ${error}`);
+    }
+    
+    
+
+
+users.update({ username: req.user.username }, { $set: { profileimage: staticFilePath } }).then();
+}
+
+res.location('/users/myprofile/');
+res.redirect('/users/myprofile/');
 });
 
 router.post('/edit/bio/:id/', isAuth, (req, res) => {
@@ -101,7 +134,7 @@ router.get('/', isAuth, (req, res) => {
         res.render('users', { title: 'Users', username: req.user.username, users: usr });
     });
 });
-
+*/
 /* GET users listing. */
 router.get('/profile/:id/', isAuth, (req, res) => {
     const users = db.get('users')

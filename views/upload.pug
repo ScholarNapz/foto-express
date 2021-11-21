@@ -5,9 +5,9 @@ block content
     h3 Upload Image
     .coll-gap
     form.flex-col(action='/images/upload', method='post', enctype='multipart/form-data')
-      .details-container
+      .details-container.flex-col(style=`justify-items: flex-start; gap:4px;`)
         input#upload-image( class='upload-image' type='file', name='upload-image')
-      input.btn.btn-medSlate-full(type='submit', name='upload', value='Submit ')
+        input.btn.btn-medSlate-full(type='submit', name='upload', value='Submit ')
 
 
 

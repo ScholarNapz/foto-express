@@ -9,7 +9,7 @@
   </head>
   <body></body>
   <nav>
-    <div class="nav-logo"><a href="/gallery">foto<strong class="logo-strong">.</strong></a></div>
+    <div class="nav-logo"><a class="logo-text" href="/gallery">foto<strong class="logo-strong">.</strong></a></div>
     <div class="nav-control">
       <div class="nav-main"><a href="/images/upload">Upload</a><a href="/users/">Users</a><a href="/users/myprofile/">My profile</a></div>
       <div class="gap"></div>
@@ -20,10 +20,10 @@
     <h3>Upload Image</h3>
     <div class="coll-gap"></div>
     <form class="flex-col" action="/images/upload" method="post" enctype="multipart/form-data">
-      <div class="details-container">
+      <div class="details-container flex-col" style="justify-items: flex-start; gap:4px;">
         <input class="upload-image" id="upload-image" type="file" name="upload-image">
+        <input class="btn btn-medSlate-full" type="submit" name="upload" value="Submit ">
       </div>
-      <input class="btn btn-medSlate-full" type="submit" name="upload" value="Submit ">
     </form>
   </section>
 </html>

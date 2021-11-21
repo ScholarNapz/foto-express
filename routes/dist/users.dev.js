@@ -10,6 +10,8 @@ var isAuth = require('../lib/authMiddleware').isAuth;
 
 var fs = require('fs');
 
+var sharp = require('sharp');
+
 var _require = require("child_process"),
     exec = _require.exec; //? DB
 
@@ -51,7 +53,7 @@ var upload = multer({
   fileFilter: fileFilter
 });
 router.post('/upload', isAuth, upload.single('upload-image'), function (req, res, next) {
-  if (imageName !== null) {
+  if (imageName != null) {
     var users = db.get('users');
 
     var dirName = (__dirname + '').split('/');
@@ -61,65 +63,81 @@ router.post('/upload', isAuth, upload.single('upload-image'), function (req, res
     dirName.forEach(function (folder) {
       staticPath += folder + '/';
     });
-    var tempFilePath = staticPath + 'static/.temp/' + imageName;
-    var saveFilePath = staticPath + 'static/profileimages/' + imageName;
-    var staticFilePath = '/profileimages/' + imageName;
-    var execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300";
-    exec(execLine, function (error, stdout, stderr) {
-      if (error) {
-        res.location('/users/myprofile/');
-        res.redirect('/users/myprofile/');
-        return;
-      }
+    console.log(imageName); //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
+    // if (imageName.split('.').pop() !== '.gif') {
+    //     fs.copyFile(staticPath + 'static/.temp/' + imageName,
+    //         staticPath + 'static/profileimages/' + imageName, (err) => {
+    //             if (err) throw err;
+    //         });
+    // } else {
 
-      var pathToTempPic = staticPath + 'static/.temp/' + imageName; // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
+    sharp(staticPath + 'static/.temp/' + imageName).resize(300, 300).toFile(staticPath + 'static/profileimages/' + imageName, function (err, info) {
+      console.log('converted');
+    }); // }
 
-      try {
-        fs.unlinkSync(pathToTempPic);
-      } catch (error) {
-        console.log("Delete error: ".concat(error));
-      }
-    });
     users.update({
       username: req.user.username
     }, {
       $set: {
-        profileimage: staticFilePath
+        profileimage: '/profileimages/' + imageName
       }
+    }).then(function () {
+      console.log('profile image update');
+      res.location('/users/myprofile/');
+      res.redirect('/users/myprofile/');
     });
+  } else {
+    res.location('/users/myprofile/');
+    res.redirect('/users/myprofile/');
   }
+});
+/*
+let tempFilePath = staticPath + 'static/.temp/' + imageName;
+let saveFilePath = staticPath + 'static/profileimages/' + imageName;
+let staticFilePath = '/profileimages/' + imageName;
 
-  res.location('/users/myprofile/');
-  res.redirect('/users/myprofile/');
-});
-router.post('/edit/bio/:id/', isAuth, function (req, res) {
-  var user = db.get('users');
-  user.update({
-    username: req.user.username
-  }, {
-    $set: {
-      bio: req.body.bio
+let execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300"
+
+exec(execLine, (error, stdout, stderr) => {
+    if (error) {
+        res.location('/users/myprofile/');
+        res.redirect('/users/myprofile/');
+        return;
     }
-  });
-  res.location('/users/profile/' + req.params.id);
-  res.redirect('/users/profile/' + req.params.id);
+
+    let pathToTempPic = staticPath + 'static/.temp/' + imageName;
+    // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
+    try {
+        fs.unlinkSync(pathToTempPic)
+    } catch (error) {
+        console.log(`Delete error: ${error}`);
+    }
+    
+    
+
+
+users.update({ username: req.user.username }, { $set: { profileimage: staticFilePath } }).then();
+}
+
+res.location('/users/myprofile/');
+res.redirect('/users/myprofile/');
 });
-router.get('/', isAuth, function (req, res) {
-  var users = db.get('users');
-  users.find({
-    $nor: [{
-      $and: [{
-        'username': req.user.username
-      }]
-    }]
-  }).then(function (usr) {
-    res.render('users', {
-      title: 'Users',
-      username: req.user.username,
-      users: usr
+
+router.post('/edit/bio/:id/', isAuth, (req, res) => {
+    const user = db.get('users');
+    user.update({ username: req.user.username }, { $set: { bio: req.body.bio } })
+    res.location('/users/profile/' + req.params.id);
+    res.redirect('/users/profile/' + req.params.id);
+});
+
+router.get('/', isAuth, (req, res) => {
+    const users = db.get('users');
+    users.find({ $nor: [{ $and: [{ 'username': req.user.username }] }] }).then(usr => {
+        res.render('users', { title: 'Users', username: req.user.username, users: usr });
     });
-  });
 });
+*/
+
 /* GET users listing. */
 
 router.get('/profile/:id/', isAuth, function (req, res) {
