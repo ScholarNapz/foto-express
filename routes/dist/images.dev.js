@@ -56,7 +56,7 @@ var fileFilter = function fileFilter(req, file, cb) {
   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/pjpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/bmp' || file.mimetype === 'image/gif') {
     cb(null, true);
   } else {
-    cb(new Error('File is not in image format.'), false);
+    cb(null, false); // cb(new Error('File is not in image format.'), false);
   }
 };
 
@@ -264,45 +264,50 @@ router.post('/edit/:id/description/', isOwner, [body('description', 'empty').tri
   });
 });
 router.post('/upload', isAuth, upload.single('upload-image'), function (req, res, next) {
-  var dirName = (__dirname + '').split('/');
+  if (imageName != null) {
+    var dirName = (__dirname + '').split('/');
 
-  dirName.pop();
-  var staticPath = '';
-  dirName.forEach(function (folder) {
-    staticPath += folder + '/';
-  }); //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
+    dirName.pop();
+    var staticPath = '';
+    dirName.forEach(function (folder) {
+      staticPath += folder + '/';
+    }); //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
 
-  if (imageName.split('.').pop() !== '.gif') {
-    fs.copyFile(staticPath + 'static/uploads/' + imageName, staticPath + 'static/thumbnails/' + imageName, function (err) {
-      if (err) throw err;
+    if (imageName.split('.').pop() !== '.gif') {
+      fs.copyFile(staticPath + 'static/uploads/' + imageName, staticPath + 'static/thumbnails/' + imageName, function (err) {
+        console.log('Uplaod Error');
+      });
+    } else {
+      sharp(staticPath + 'static/uploads/' + imageName).resize(300, 300).toFile(staticPath + 'static/thumbnails/' + imageName, function (err, info) {});
+    } //
+
+
+    var images = req.db.get('images');
+    var name = imageName.split('.');
+    name.pop();
+    var imageLoc = '/uploads/' + imageName;
+    var thumbnailLoc = '/thumbnails/' + imageName;
+    var username = req.user.username;
+    var description = '';
+    var collections = [];
+    var tags = [];
+    var date = moment().toISOString();
+    images.insert({
+      name: name[0],
+      location: imageLoc,
+      thumbnail: thumbnailLoc,
+      username: username,
+      description: description,
+      collections: collections,
+      tags: tags,
+      date: date
     });
+    res.location('/images/view/' + name[0] + '/');
+    res.redirect('/images/view/' + name[0] + '/');
   } else {
-    sharp(staticPath + 'static/uploads/' + imageName).resize(300, 300).toFile(staticPath + 'static/thumbnails/' + imageName, function (err, info) {});
-  } //
-
-
-  var images = req.db.get('images');
-  var name = imageName.split('.');
-  name.pop();
-  var imageLoc = '/uploads/' + imageName;
-  var thumbnailLoc = '/thumbnails/' + imageName;
-  var username = req.user.username;
-  var description = '';
-  var collections = [];
-  var tags = [];
-  var date = moment().toISOString();
-  images.insert({
-    name: name[0],
-    location: imageLoc,
-    thumbnail: thumbnailLoc,
-    username: username,
-    description: description,
-    collections: collections,
-    tags: tags,
-    date: date
-  });
-  res.location('/images/view/' + name[0] + '/');
-  res.redirect('/images/view/' + name[0] + '/');
+    res.location('/gallery/');
+    res.redirect('/gallery/');
+  }
 });
 router.post('/remove/:id/', isAuth, isOwner, function (req, res) {
   var images = req.db.get('images');

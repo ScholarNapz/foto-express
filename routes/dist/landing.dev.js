@@ -25,11 +25,15 @@ function isAvailable(req, res, next) {
   req.db.get('users').findOne({
     username: req.body.username
   }).then(function (user) {
-    if (user['username'] === req.body.username) {
-      req.flash('failure', 'Username already In Use');
-      res.location('/register');
-      res.redirect('/register');
-    } else {
+    try {
+      if (user['username'] === req.body.username) {
+        req.flash('failure', 'Username already In Use');
+        res.location('/register');
+        res.redirect('/register');
+      } else {
+        next();
+      }
+    } catch (error) {
       next();
     }
   });
