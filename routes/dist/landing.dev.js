@@ -14,7 +14,9 @@ var app = require('../app');
 
 var moment = require('moment');
 
-var passport = require('passport'); // router.use((req, res, next) => {
+var passport = require('passport');
+
+var alert = require('alert'); // router.use((req, res, next) => {
 //     console.log(req.session);
 //     console.log(req.user);
 //     next();
@@ -27,7 +29,7 @@ function isAvailable(req, res, next) {
   }).then(function (user) {
     try {
       if (user['username'] === req.body.username) {
-        req.flash('failure', 'Username already In Use');
+        alert('Username already In Use');
         res.location('/register');
         res.redirect('/register');
       } else {
@@ -104,7 +106,7 @@ router.post('/register', isAvailable, [body('username', 'Username is Required').
       profileimage: profileimage,
       date: date
     });
-    req.flash('success', 'Registration successful');
+    alert('Registration successful');
     res.location('/');
     res.redirect('/');
   }

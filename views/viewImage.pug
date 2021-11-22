@@ -1,41 +1,43 @@
 extends layout
 
 block content
-  section.section-image-view.container-small.flex-col.pad-hor
-    .flex-row 
-      .flex-col(style=(`gap:20px;`))
-        a(href=`/users/profile/${image.username}`)
-          h3 #{image.username}
-        h5 Uploaded:&nbsp 
-            | #{date}
+  section
+    .section-image-view.container-small.flex-col
+      .flex-row 
+        .flex-col(style=(`gap:20px;`))
+          a(href=`/users/profile/${image.username}`)
+            h3 #{image.username}
+          h5 Uploaded:&nbsp 
+              | #{date}
 
-    div(style=`display:flex; flex-direction:column padding-top:10px`)
-      div(style=`display:flex; gap:10px`)
-        a.btn.btn-margin.btn-rustic-full(href=`/images/download/${image.name}/`) Download
-        button.btn.btn-margin.btn-fir-full(onclick='myFunction()') Get Link
-      script.
-        function myFunction() {
-          navigator.clipboard.writeText('http://localhost:3000/images/view/202111210852252680');
-          /* Alert the copied text */
-          alert("Link Copied: \nhttp://localhost:3000/images/view/202111210852252680",'success');
-        }
+      div(style=`display:flex; flex-direction:column padding-top:10px`)
+        div(style=`display:flex; gap:10px`)
+          a.btn.btn-margin.btn-rustic-full(href=`/images/download/${image.name}/`) Download
+          button.btn.btn-margin.btn-fir-full(onclick='myFunction()') Get Link
+        script.
+          function myFunction() {
+            navigator.clipboard.writeText('http://localhost:3000/images/view/202111210852252680');
+            /* Alert the copied text */
+            alert("Link Copied: \nhttp://localhost:3000/images/view/202111210852252680",'success');
+          }
 
-    .image-display
-      img(src=`${image.location}` alt=`${image.name}`)
+      .image-display
+        img(src=`${image.location}` alt=`${image.name}`)
+
       .details-container.flex-col
-    h5 Description
-    textarea#description.description-box(disabled='' name="description", cols="30") 
-      != image.description
-      
-    if image.tags
-      .flex-col
-        h5 Tags
-          .tags-container
-            each tag, i in image.tags
-              a.btn.btn-margin.btn-medSlate-full(href=`/gallery/tags/${tag}`) #{tag}
-    if image.collections
-      .flex-col
-        h5 Collections
-        .tags-container
-          each collection, i in image.collections
-            a.btn.btn-margin.btn-rustic-full(href=`/gallery/collection/${image.username}/${collection}`) #{collection}
+        h5 Description
+        textarea#description.description-box(disabled='' name="description", cols="30") 
+          != image.description
+          
+        if image.tags
+          .flex-col
+            h5 Tags
+              .tags-container
+                each tag, i in image.tags
+                  a.btn.btn-margin.btn-medSlate-full(href=`/gallery/tags/${tag}`) #{tag}
+        if image.collections
+          .flex-col
+            h5 Collections
+            .tags-container
+              each collection, i in image.collections
+                a.btn.btn-margin.btn-rustic-full(href=`/gallery/collection/${image.username}/${collection}`) #{collection}

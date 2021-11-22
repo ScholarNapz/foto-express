@@ -497,13 +497,12 @@ img {
 
 .image-display {
     margin: 20px;
-    height: auto;
-    /* max-width: device-width; */
     align-self: center;
 }
 
 .image-display img {
-    max-width: 100%;
+    width: auto;
+    height: 600px;
 }
 
 .upload-image::-webkit-file-upload-button {

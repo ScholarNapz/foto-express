@@ -7,7 +7,7 @@ block content
           .gallery-nav
             if isCollection
               a(href=`/users/profile/${usr}`)
-                h3 #{title}
+                h3 #{usr} &nbsp;:&nbsp; #{title}
             else
               h3 #{title}
             .gap
@@ -16,6 +16,7 @@ block content
                 input(type='text' name='search' placeholder='Search Tag')
                 button(type='submit' name='submit' value='/gallery/tags/') Search
 
+        a.btn.btn-margin.btn-rustic-full(href=`/gallery/remove/collection/${usr}/${title}/`) DELETE COLLECTION
 
         .line
         .gallery

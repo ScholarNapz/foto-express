@@ -10,10 +10,10 @@ var isAuth = require('../lib/authMiddleware').isAuth;
 
 var fs = require('fs');
 
-var sharp = require('sharp');
-
-var _require = require("child_process"),
-    exec = _require.exec; //? DB
+var sharp = require('sharp'); //? for py script image converter 
+//* abandon on deployment - desync issue 
+// const { exec } = require("child_process");
+//? DB
 
 
 var db = require('monk')('localhost/fotodb'); // const users = db.get('users');
@@ -85,39 +85,6 @@ router.post('/upload', isAuth, upload.single('upload-image'), function (req, res
     res.redirect('/users/myprofile/');
   }
 });
-/*
-let tempFilePath = staticPath + 'static/.temp/' + imageName;
-let saveFilePath = staticPath + 'static/profileimages/' + imageName;
-let staticFilePath = '/profileimages/' + imageName;
-
-let execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300"
-
-exec(execLine, (error, stdout, stderr) => {
-    if (error) {
-        res.location('/users/myprofile/');
-        res.redirect('/users/myprofile/');
-        return;
-    }
-
-    let pathToTempPic = staticPath + 'static/.temp/' + imageName;
-    // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
-    try {
-        fs.unlinkSync(pathToTempPic)
-    } catch (error) {
-        console.log(`Delete error: ${error}`);
-    }
-    
-    
-
-
-users.update({ username: req.user.username }, { $set: { profileimage: staticFilePath } }).then();
-}
-
-res.location('/users/myprofile/');
-res.redirect('/users/myprofile/');
-});
-*/
-
 router.post('/edit/bio/:id/', isAuth, function (req, res) {
   var user = db.get('users');
   user.update({

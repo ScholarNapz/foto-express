@@ -22,7 +22,65 @@ var sharp = require('sharp');
 
 var isAuth = require('../lib/authMiddleware').isAuth;
 
+var alert = require('alert');
+
 var port = process.env.PORT;
+
+function userExistsAdmin(req, res, next) {
+  req.db.get('users').findOne({
+    username: req.body.addadmin
+  }).then(function (user) {
+    try {
+      if (user.username !== '') {
+        console.log(user.username);
+        console.log(user.username);
+        req.db.get('images').findOne({
+          name: req.params.id
+        }).then(function (image) {
+          if (user.username === image.username) {
+            alert('Owner Cannot Be Added');
+            res.location('/images/view/' + req.params.id + '/#addadmin');
+            res.redirect('/images/view/' + req.params.id + '/##addadmin');
+          } else {
+            next();
+          }
+        });
+      }
+    } catch (error) {
+      alert('User Does Not Exist');
+      res.location('/images/view/' + req.params.id + '/#addadmin');
+      res.redirect('/images/view/' + req.params.id + '/##addadmin');
+    }
+  });
+}
+
+function userExistsShared(req, res, next) {
+  req.db.get('users').findOne({
+    username: req.body.addshared
+  }).then(function (user) {
+    try {
+      if (user.username !== '') {
+        console.log(user.username);
+        console.log(user.username);
+        req.db.get('images').findOne({
+          name: req.params.id
+        }).then(function (image) {
+          if (user.username === image.username) {
+            alert('Owner Cannot Be Added');
+            res.location('/images/view/' + req.params.id + '/#addshares');
+            res.redirect('/images/view/' + req.params.id + '/#addshared');
+          } else {
+            next();
+          }
+        });
+      }
+    } catch (error) {
+      alert('User Does Not Exist');
+      res.location('/images/view/' + req.params.id + '/#addadmin');
+      res.redirect('/images/view/' + req.params.id + '/##addadmin');
+    }
+  });
+}
 
 function isOwnerOrAdmin(req, res, next) {
   console.log(req.params.id);
@@ -30,6 +88,8 @@ function isOwnerOrAdmin(req, res, next) {
     name: req.params.id
   }).then(function (image) {
     console.log('Check if owner');
+    console.log("image user: ".concat(image['username']));
+    console.log("user: ".concat(req.user.username));
 
     if (image['username'] === req.user.username) {
       next();
@@ -62,14 +122,13 @@ function isOwnerOrAdmin(req, res, next) {
                 next();
               }
 
-              if (i + 1 >= image['admins'].length) {
+              if (i + 1 > image['admins'].length) {
                 console.log('Not Admin');
                 res.render('viewImage', {
                   title: 'image.name',
                   username: req.user.username,
                   image: image
                 });
-                next();
               }
             }
           }
@@ -82,8 +141,7 @@ function isOwnerOrAdmin(req, res, next) {
           });
           next();
         }
-      }); // res.location('/images/view/' + req.params.id + '/#')
-      // res.redirect('/images/view/' + req.params.id + '/#')
+      });
     }
   });
 }
@@ -308,7 +366,7 @@ router.post('/edit/:id/addcollection', isOwnerOrAdmin, [body('addcollection', 'e
     ;
   });
 });
-router.post('/edit/:id/addadmin/', isOwnerOrAdmin, [body('addadmin', 'empty').trim().escape(), body('addadmin', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/addadmin/', isOwnerOrAdmin, [body('addadmin', 'empty').trim().escape(), body('addadmin', 'empty').not().isEmpty()], userExistsAdmin, function (req, res, next) {
   console.log('addadmin started');
   var images = req.db.get('images');
   images.findOne({
@@ -345,7 +403,7 @@ router.post('/edit/:id/addadmin/', isOwnerOrAdmin, [body('addadmin', 'empty').tr
     ;
   });
 });
-router.post('/edit/:id/addshared/', isOwnerOrAdmin, [body('addshared', 'empty').trim().escape(), body('addshared', 'empty').not().isEmpty()], function (req, res, next) {
+router.post('/edit/:id/addshared/', isOwnerOrAdmin, [body('addshared', 'empty').trim().escape(), body('addshared', 'empty').not().isEmpty()], userExistsShared, function (req, res, next) {
   console.log('addshared started');
   var images = req.db.get('images');
   images.findOne({
@@ -473,6 +531,7 @@ function (req, res) {
           console.log("Delete error: ".concat(error));
         }
 
+        alert('Image Is Removed');
         res.location('/users/myprofile');
         res.redirect('/users/myprofile');
       });

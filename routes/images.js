@@ -10,12 +10,66 @@ const path = require('path');
 const sharp = require('sharp');
 const isAuth = require('../lib/authMiddleware').isAuth;
 
+const alert = require('alert');
+
+
+
 let port = process.env.PORT
+
+function userExistsAdmin(req, res, next) {
+    req.db.get('users').findOne({ username: req.body.addadmin }).then((user) => {
+        try {
+            if (user.username !== '') {
+                console.log(user.username);
+                console.log(user.username);
+                req.db.get('images').findOne({ name: req.params.id }).then((image) => {
+                    if (user.username === image.username) {
+                        alert('Owner Cannot Be Added');
+                        res.location('/images/view/' + req.params.id + '/#addadmin');
+                        res.redirect('/images/view/' + req.params.id + '/##addadmin');
+                    } else {
+                        next();
+                    }
+                })
+            }
+        } catch (error) {
+            alert('User Does Not Exist');
+            res.location('/images/view/' + req.params.id + '/#addadmin');
+            res.redirect('/images/view/' + req.params.id + '/##addadmin');
+        }
+    });
+}
+
+function userExistsShared(req, res, next) {
+    req.db.get('users').findOne({ username: req.body.addshared }).then((user) => {
+        try {
+            if (user.username !== '') {
+                console.log(user.username);
+                console.log(user.username);
+                req.db.get('images').findOne({ name: req.params.id }).then((image) => {
+                    if (user.username === image.username) {
+                        alert('Owner Cannot Be Added');
+                        res.location('/images/view/' + req.params.id + '/#addshares');
+                        res.redirect('/images/view/' + req.params.id + '/#addshared');
+                    } else {
+                        next();
+                    }
+                })
+            }
+        } catch (error) {
+            alert('User Does Not Exist');
+            res.location('/images/view/' + req.params.id + '/#addadmin');
+            res.redirect('/images/view/' + req.params.id + '/##addadmin');
+        }
+    });
+}
 
 function isOwnerOrAdmin(req, res, next) {
     console.log(req.params.id);
     req.db.get('images').findOne({ name: req.params.id }).then((image) => {
         console.log('Check if owner');
+        console.log(`image user: ${image['username']}`);
+        console.log(`user: ${req.user.username}`);
         if (image['username'] === req.user.username) {
 
             next();
@@ -42,10 +96,9 @@ function isOwnerOrAdmin(req, res, next) {
                                 next();
                             }
 
-                            if (i + 1 >= image['admins'].length) {
+                            if (i + 1 > image['admins'].length) {
                                 console.log('Not Admin');
                                 res.render('viewImage', { title: 'image.name', username: req.user.username, image: image });
-                                next();
                             }
                         }
                     }
@@ -56,11 +109,7 @@ function isOwnerOrAdmin(req, res, next) {
                     next();
                 }
             });
-            // res.location('/images/view/' + req.params.id + '/#')
-            // res.redirect('/images/view/' + req.params.id + '/#')
         }
-
-
     });
 }
 
@@ -258,7 +307,7 @@ router.post('/edit/:id/addcollection', isOwnerOrAdmin, [
 router.post('/edit/:id/addadmin/', isOwnerOrAdmin, [
     body('addadmin', 'empty').trim().escape(),
     body('addadmin', 'empty').not().isEmpty(),
-], function(req, res, next) {
+], userExistsAdmin, function(req, res, next) {
     console.log('addadmin started');
     const images = req.db.get('images');
 
@@ -290,7 +339,7 @@ router.post('/edit/:id/addadmin/', isOwnerOrAdmin, [
 router.post('/edit/:id/addshared/', isOwnerOrAdmin, [
     body('addshared', 'empty').trim().escape(),
     body('addshared', 'empty').not().isEmpty(),
-], function(req, res, next) {
+], userExistsShared, function(req, res, next) {
     console.log('addshared started');
     const images = req.db.get('images');
 
@@ -418,6 +467,7 @@ router.post('/remove/:id/', isAuth, /*isOwner,*/ (req, res) => {
                     console.log(`Delete error: ${error}`);
                 }
 
+                alert('Image Is Removed');
                 res.location('/users/myprofile');
                 res.redirect('/users/myprofile');
             })
