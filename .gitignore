@@ -63,4 +63,6 @@ typings/
 # OTHER
 static/thumbnails/
 static/uploads/
+static/.temp/
+static/profileimages/
 

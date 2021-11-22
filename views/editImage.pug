@@ -2,14 +2,31 @@ extends layout
 
 block content
   section.section-image-view.container-small.flex-col.pad-hor
-    a(href=`/users/profile/${image.username}`)
-      h3 #{image.username}
+    div(style="width:100%")
+      .flex-row(style=` justify-content:flex-start `)
+        .flex-col(style=(`gap:20px; flex-grow:0; width:fit-content;`))
+          a(href=`/users/profile/${image.username}`)
+            h3 #{image.username}
+          h5 Uploaded:&nbsp 
+              | #{date}
+
+    div(style=`display:flex; flex-direction:column padding-top:10px`)
+      div(style=`display:flex; gap:10px`)
+        a.btn.btn-margin.btn-rustic-full(href=`/images/download/${image.name}/`) Download
+        button.btn.btn-margin.btn-fir-full(onclick='myFunction()') Get Link
+      script.
+        function myFunction() {
+          navigator.clipboard.writeText('http://localhost:3000/images/view/202111210852252680');
+          /* Alert the copied text */
+          alert("Link Copied: \nhttp://localhost:3000/images/view/202111210852252680",'success');
+        }
+
     .image-display
       img(src=`${image.location}` alt=`${image.name}`)
     .details-container.flex-col
       .flex-col
         .flex-row.flex-gap
-          h5(style='align-self:flex-start') Description
+          h5(style='align-self:flex-start; flex-basis:72px') Description
           form.flex-col( style='flex-grow: 1' method='post', action=`/images/edit/${image.name}/description/`) 
             textarea.description-box(name="description" id='description')
               != image.description
@@ -17,7 +34,7 @@ block content
 
       .flex-col
         .flex-row.flex-gap
-          h5(style='align-self:flex-start; padding:10px') Tags
+          h5(style='align-self:flex-start; padding:10px 7px; flex-basis:72px') Tags
           .flex-col
             .search-bar
                   form(method='post', action=`/images/edit/${image.name}/addtag/`)
@@ -29,7 +46,7 @@ block content
                   a.btn.btn-margin.btn-medSlate-full(href=`/images/edit/${image.name}/removetag/${tag}`) #{tag}
       .flex-col
         .flex-row.flex-gap 
-          h5(style='align-self:flex-start; padding:10px') Collections
+          h5(style='align-self:flex-start; padding:10px 3px;  flex-basis:72px') Collections
           .flex-col
             .search-bar
               form(method='post', action=`/images/edit/${image.name}/addcollection/`)
@@ -40,10 +57,45 @@ block content
               .tags-container
                 each collection, i in image.collections  
                   a.btn.btn-medSlate-full(href=`/images/edit/${image.name}/removecollection/${collection}`) #{collection}
+      
+      
+      .flex-col    
+        .flex-row.flex-gap 
+          h5(style='align-self:flex-start; padding:10px 6px;  flex-basis:72px') Admins
+            
+          .flex-col
+            .search-bar(style='')
+                  form(method='post', action=`/images/edit/${image.name}/addadmin/`)
+                    input#addadmin(type='text' name='addadmin' placeholder='Add Admin')
+                    button(type='submit' name='submit' value='') Add
+            if image.admins
+              .tags-container
+                each admin, i in image.admins
+                  a.btn.btn-fir.btn-fir-full(href=`/images/edit/${image.name}/removeadmin/${admin}`) #{admin}
+      
+      
+      .flex-col    
+        .flex-row.flex-gap 
+          h5(style='align-self:flex-start; padding:10px 6px;  flex-basis:72px') Shared with
+            
+          .flex-col
+            .search-bar(style='')
+                  form(method='post', action=`/images/edit/${image.name}/addshared/`)
+                    input#addshared(type='text' name='addshared' placeholder='Add Shared')
+                    button(type='submit' name='submit' value='') Add
+            if image.shared
+              .tags-container
+                each share, i in image.shared
+                  a.btn.btn-fir.btn-fir-full(href=`/images/edit/${image.name}/removeshared/${share}`) #{share}
 
-      form(action=`/images/remove/${image.name}`, method='post', enctype='multipart/form-data')
+      form(action=`/images/remove/${image.name}`, method='post')
         .form-buttons
             button#login.btn.btn-margin.btn-rustic-full(type='submit' name='submit' value='remove') Delete Image
+
+      
+
+
+
     //- script(src="/ckeditor/ckeditor.js")
     //- script 
     //-   | CKEDITOR.replace('description')

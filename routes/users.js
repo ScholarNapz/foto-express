@@ -34,7 +34,6 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-
 const upload = multer({
     storage: storage,
 
@@ -44,9 +43,6 @@ const upload = multer({
 
     fileFilter: fileFilter
 });
-
-
-
 
 router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) => {
 
@@ -60,12 +56,6 @@ router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) =
         });
         console.log(imageName);
         //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
-        // if (imageName.split('.').pop() !== '.gif') {
-        //     fs.copyFile(staticPath + 'static/.temp/' + imageName,
-        //         staticPath + 'static/profileimages/' + imageName, (err) => {
-        //             if (err) throw err;
-        //         });
-        // } else {
         sharp(staticPath + 'static/.temp/' + imageName)
             .resize(300, 300)
             .toFile(staticPath + 'static/profileimages/' + imageName, (err, info) => {
@@ -120,7 +110,7 @@ users.update({ username: req.user.username }, { $set: { profileimage: staticFile
 res.location('/users/myprofile/');
 res.redirect('/users/myprofile/');
 });
-
+*/
 router.post('/edit/bio/:id/', isAuth, (req, res) => {
     const user = db.get('users');
     user.update({ username: req.user.username }, { $set: { bio: req.body.bio } })
@@ -134,11 +124,9 @@ router.get('/', isAuth, (req, res) => {
         res.render('users', { title: 'Users', username: req.user.username, users: usr });
     });
 });
-*/
+
 /* GET users listing. */
 router.get('/profile/:id/', isAuth, (req, res) => {
-    const users = db.get('users')
-    const images = db.get('images');
     if (req.user.username === req.params.id) {
         res.location('/users/myprofile');
         res.redirect('/users/myprofile');
@@ -147,21 +135,22 @@ router.get('/profile/:id/', isAuth, (req, res) => {
         const images = db.get('images');
         users.findOne({ username: req.params.id }).then((user) => {
             getCollectionImages(unique(user.collections), user.username, images, users).then((collection) => {
-                images.find({ username: user.username }).then((imgs) => {
-
-                    res.render('user', {
-                        title: user.username,
-                        username: req.user.username,
-                        images: imgs,
-                        user: user,
-                        colls: collection
+                getSharedImages(user.username, images).then((shared) => {
+                    images.find({ username: user.username }).then((userImgs) => {
+                        // console.log(shared);
+                        res.render('user', {
+                            title: user.username,
+                            username: req.user.username,
+                            images: userImgs,
+                            user: user,
+                            shared: shared,
+                            colls: collection
+                        });
                     });
                 });
-            })
+            });
         });
     }
-
-
 });
 
 
@@ -170,20 +159,28 @@ router.get('/myprofile', isAuth, (req, res) => {
     const images = db.get('images');
     users.findOne({ username: req.user.username }).then((user) => {
         getCollectionImages(unique(user.collections), user.username, images, users).then((collection) => {
-            images.find({ username: user.username }).then((imgs) => {
+            getSharedImages(user.username, images).then((shared) => {
+                getAdminImages(user.username, images).then((admin) => {
+                    images.find({ username: user.username }).then((userImgs) => {
 
-                res.render('myprofile', {
-                    title: user.username,
-                    username: req.user.username,
-                    images: imgs,
-                    user: user,
-                    colls: collection
+                        console.log("-----SHARED IMGS-------------------");
+                        console.log(shared);
+                        console.log("-----ADMIN IMGS-------------------");
+                        console.log(admin);
+                        res.render('myprofile', {
+                            title: user.username,
+                            username: req.user.username,
+                            images: userImgs,
+                            user: user,
+                            shared: shared,
+                            admin: admin,
+                            colls: collection
+                        });
+                    });
                 });
             });
         })
     });
-
-
 });
 
 /*-------------------------------
@@ -197,7 +194,6 @@ function unique(collections) {
 
 const getCollectionImages = (collections, username, images, users) => {
     let collectionObj = {}
-
     return new Promise((resolve, reject) => {
         if (collections.length == 0) {
             resolve(collectionObj);
@@ -205,7 +201,6 @@ const getCollectionImages = (collections, username, images, users) => {
             let itemsDone = 0;
             collections.forEach(element => {
                 images.findOne({ username: username, collections: { $in: [element] } }).then((image) => {
-
                     try {
                         collectionObj[element] = image['thumbnail']
                     } catch (error) {
@@ -218,6 +213,53 @@ const getCollectionImages = (collections, username, images, users) => {
                 });
             });
         }
+    });
+};
+
+
+const getSharedImages = (username, images) => {
+    let shareObj = {}
+    return new Promise((resolve, reject) => {
+        images.find({ shared: { $in: [username] } }).then((imgs) => {
+            const jsn = JSON.parse(JSON.stringify(imgs));
+            var arr = [];
+            arr = jsn;
+            if (arr.length == 0) {
+                resolve(shareObj);
+            } else {
+                let itemsDone = 0;
+                arr.forEach(elm => {
+                    shareObj[elm.name] = elm.thumbnail
+                    itemsDone++;
+                    if (itemsDone === arr.length) {
+                        resolve(shareObj);
+                    }
+                });
+            }
+        });
+    });
+};
+
+const getAdminImages = (username, images) => {
+    let adminObj = {}
+    return new Promise((resolve, reject) => {
+        images.find({ admins: { $in: [username] } }).then((imgs) => {
+            const jsn = JSON.parse(JSON.stringify(imgs));
+            var arr = [];
+            arr = jsn;
+            if (arr.length == 0) {
+                resolve(adminObj);
+            } else {
+                let itemsDone = 0;
+                arr.forEach(elm => {
+                    adminObj[elm.name] = elm.thumbnail
+                    itemsDone++;
+                    if (itemsDone === arr.length) {
+                        resolve(adminObj);
+                    }
+                });
+            }
+        });
     });
 };
 

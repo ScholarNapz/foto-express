@@ -23,12 +23,9 @@ block content
               textarea.description-box(name="bio" id='bio')
                 != user.bio
               button.btn.btn-fir-full(type='submit' name='submit' value='') Save
-            //- .description-box
-            //-       form(method='post', action=`/users/edit/bio/${user.username}`)
-            //-         input#addtag(type='text' name='addtag' placeholder='Add Tag')
-            //-         button(type='submit' name='submit' value='') Add -//
+
       .line
-      if colls
+      if Object.keys(colls).length !== 0 
         .gallery
           h3 Galleries
           .generate-grid.align-below
@@ -39,12 +36,30 @@ block content
                     img(src=`${val}` alt='cat')
                 a(href=`/gallery/collection/${user.username}/${key}`) #{key}
 
-      .gallery
-        h3 All Photos
-        .generate-grid
-          if images
+      if images
+        .gallery
+          h3 All Photos
+          .generate-grid
             each image, i in images 
               .box.box-image
                 a(href=`/images/view/${image.name}`)
                   img(src=`${image.thumbnail}` alt=`${image.name}`)
+
+      if Object.keys(admin).length !== 0
+        .gallery
+          h3 Admin Rights
+            .generate-grid
+              each val,key in admin
+                .box.box-image
+                    a(href=`/images/view/${key}`)
+                      img(src=`${val}` alt=`${key}`)
+      if Object.keys(shared).length !== 0
+        .gallery
+          h3 Shared with Me
+            .generate-grid
+              each val,key in shared
+                .box.box-image
+                    a(href=`/images/view/${key}`)
+                      img(src=`${val}` alt=`${key}`)
+
 
