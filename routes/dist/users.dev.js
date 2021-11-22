@@ -64,12 +64,6 @@ router.post('/upload', isAuth, upload.single('upload-image'), function (req, res
       staticPath += folder + '/';
     });
     console.log(imageName); //! Convert imageName upload/<Imagefile> to 300x300 and save in thumbnails/<ImageName>
-    // if (imageName.split('.').pop() !== '.gif') {
-    //     fs.copyFile(staticPath + 'static/.temp/' + imageName,
-    //         staticPath + 'static/profileimages/' + imageName, (err) => {
-    //             if (err) throw err;
-    //         });
-    // } else {
 
     sharp(staticPath + 'static/.temp/' + imageName).resize(300, 300).toFile(staticPath + 'static/profileimages/' + imageName, function (err, info) {
       console.log('converted');
@@ -155,30 +149,29 @@ router.get('/', isAuth, function (req, res) {
 /* GET users listing. */
 
 router.get('/profile/:id/', isAuth, function (req, res) {
-  var users = db.get('users');
-  var images = db.get('images');
-
   if (req.user.username === req.params.id) {
     res.location('/users/myprofile');
     res.redirect('/users/myprofile');
   } else {
-    var _users = db.get('users');
-
-    var _images = db.get('images');
-
-    _users.findOne({
+    var users = db.get('users');
+    var images = db.get('images');
+    users.findOne({
       username: req.params.id
     }).then(function (user) {
-      getCollectionImages(unique(user.collections), user.username, _images, _users).then(function (collection) {
-        _images.find({
-          username: user.username
-        }).then(function (imgs) {
-          res.render('user', {
-            title: user.username,
-            username: req.user.username,
-            images: imgs,
-            user: user,
-            colls: collection
+      getCollectionImages(unique(user.collections), user.username, images, users).then(function (collection) {
+        getSharedImages(user.username, images).then(function (shared) {
+          images.find({
+            username: user.username
+          }).then(function (userImgs) {
+            // console.log(shared);
+            res.render('user', {
+              title: user.username,
+              username: req.user.username,
+              images: userImgs,
+              user: user,
+              shared: shared,
+              colls: collection
+            });
           });
         });
       });
@@ -192,15 +185,25 @@ router.get('/myprofile', isAuth, function (req, res) {
     username: req.user.username
   }).then(function (user) {
     getCollectionImages(unique(user.collections), user.username, images, users).then(function (collection) {
-      images.find({
-        username: user.username
-      }).then(function (imgs) {
-        res.render('myprofile', {
-          title: user.username,
-          username: req.user.username,
-          images: imgs,
-          user: user,
-          colls: collection
+      getSharedImages(user.username, images).then(function (shared) {
+        getAdminImages(user.username, images).then(function (admin) {
+          images.find({
+            username: user.username
+          }).then(function (userImgs) {
+            console.log("-----SHARED IMGS-------------------");
+            console.log(shared);
+            console.log("-----ADMIN IMGS-------------------");
+            console.log(admin);
+            res.render('myprofile', {
+              title: user.username,
+              username: req.user.username,
+              images: userImgs,
+              user: user,
+              shared: shared,
+              admin: admin,
+              colls: collection
+            });
+          });
         });
       });
     });
@@ -250,6 +253,64 @@ var getCollectionImages = function getCollectionImages(collections, username, im
         });
       });
     }
+  });
+};
+
+var getSharedImages = function getSharedImages(username, images) {
+  var shareObj = {};
+  return new Promise(function (resolve, reject) {
+    images.find({
+      shared: {
+        $in: [username]
+      }
+    }).then(function (imgs) {
+      var jsn = JSON.parse(JSON.stringify(imgs));
+      var arr = [];
+      arr = jsn;
+
+      if (arr.length == 0) {
+        resolve(shareObj);
+      } else {
+        var itemsDone = 0;
+        arr.forEach(function (elm) {
+          shareObj[elm.name] = elm.thumbnail;
+          itemsDone++;
+
+          if (itemsDone === arr.length) {
+            resolve(shareObj);
+          }
+        });
+      }
+    });
+  });
+};
+
+var getAdminImages = function getAdminImages(username, images) {
+  var adminObj = {};
+  return new Promise(function (resolve, reject) {
+    images.find({
+      admins: {
+        $in: [username]
+      }
+    }).then(function (imgs) {
+      var jsn = JSON.parse(JSON.stringify(imgs));
+      var arr = [];
+      arr = jsn;
+
+      if (arr.length == 0) {
+        resolve(adminObj);
+      } else {
+        var itemsDone = 0;
+        arr.forEach(function (elm) {
+          adminObj[elm.name] = elm.thumbnail;
+          itemsDone++;
+
+          if (itemsDone === arr.length) {
+            resolve(adminObj);
+          }
+        });
+      }
+    });
   });
 };
 

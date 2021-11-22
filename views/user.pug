@@ -24,23 +24,32 @@ block content
             //-         input#addtag(type='text' name='addtag' placeholder='Add Tag')
             //-         button(type='submit' name='submit' value='') Add -//
       .line
-      if colls
+      if Object.keys(colls).length !== 0 
         .gallery
           h3 Galleries
-          .generate-grid.align-below
-            each val, key in colls
-              .box.box-detailed
-                .box-image
-                  a(href=`/gallery/collection/${user.username}/${key}`)
-                    img(src=`${val}` alt='cat')
-                a(href=`/gallery/collection/${user.username}/${key}`) #{key}
+            .generate-grid.align-below
+              each val, key in colls
+                .box.box-detailed
+                  .box-image
+                    a(href=`/gallery/collection/${user.username}/${key}`)
+                      img(src=`${val}` alt='cat')
+                  a(href=`/gallery/collection/${user.username}/${key}`) #{key}
 
-      .gallery
-        h3 All Photos
-        .generate-grid
-          if images
-            each image, i in images 
-              .box.box-image
-                a(href=`/images/view/${image.name}`)
-                  img(src=`${image.thumbnail}` alt=`${image.name}`)
+      if images
+        .gallery
+          h3 All Photos
+            .generate-grid
+              each image, i in images 
+                .box.box-image
+                  a(href=`/images/view/${image.name}`)
+                    img(src=`${image.thumbnail}` alt=`${image.name}`)
+
+      if Object.keys(shared).length !== 0
+        .gallery
+          h3 Shared with Me
+            .generate-grid
+              each val,key in shared
+                .box.box-image
+                    a(href=`/images/view/${key}`)
+                      img(src=`${val}` alt=`${key}`)
 
