@@ -6,6 +6,8 @@ const app = require('../app');
 const moment = require('moment');
 const passport = require('passport');
 
+const alert = require('alert');
+
 // router.use((req, res, next) => {
 //     console.log(req.session);
 //     console.log(req.user);
@@ -16,7 +18,7 @@ function isAvailable(req, res, next) {
     req.db.get('users').findOne({ username: req.body.username }).then((user) => {
         try {
             if (user['username'] === req.body.username) {
-                req.flash('failure', 'Username already In Use');
+                alert('Username already In Use');
                 res.location('/register')
                 res.redirect('/register')
             } else {
@@ -109,7 +111,7 @@ router.post('/register', isAvailable, [
                 date: date
             });
 
-            req.flash('success', 'Registration successful');
+            alert('Registration successful');
 
             res.location('/');
             res.redirect('/');

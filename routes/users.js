@@ -4,7 +4,9 @@ const passport = require('passport');
 const isAuth = require('../lib/authMiddleware').isAuth;
 const fs = require('fs');
 const sharp = require('sharp');
-const { exec } = require("child_process");
+//? for py script image converter 
+//* abandon on deployment - desync issue 
+// const { exec } = require("child_process");
 //? DB
 const db = require('monk')('localhost/fotodb');
 // const users = db.get('users');
@@ -77,40 +79,6 @@ router.post('/upload', isAuth, upload.single('upload-image'), (req, res, next) =
 
 });
 
-
-
-/*
-let tempFilePath = staticPath + 'static/.temp/' + imageName;
-let saveFilePath = staticPath + 'static/profileimages/' + imageName;
-let staticFilePath = '/profileimages/' + imageName;
-
-let execLine = "python3 " + "'" + staticPath + "thumbnails.py' '" + tempFilePath + "' '" + saveFilePath + "' 300"
-
-exec(execLine, (error, stdout, stderr) => {
-    if (error) {
-        res.location('/users/myprofile/');
-        res.redirect('/users/myprofile/');
-        return;
-    }
-
-    let pathToTempPic = staticPath + 'static/.temp/' + imageName;
-    // let pathToTempPic = staticPath + 'profileimages' + user['profileimage'];
-    try {
-        fs.unlinkSync(pathToTempPic)
-    } catch (error) {
-        console.log(`Delete error: ${error}`);
-    }
-    
-    
-
-
-users.update({ username: req.user.username }, { $set: { profileimage: staticFilePath } }).then();
-}
-
-res.location('/users/myprofile/');
-res.redirect('/users/myprofile/');
-});
-*/
 router.post('/edit/bio/:id/', isAuth, (req, res) => {
     const user = db.get('users');
     user.update({ username: req.user.username }, { $set: { bio: req.body.bio } })
